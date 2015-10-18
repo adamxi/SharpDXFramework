@@ -122,8 +122,7 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Content\Fonts\" />
-    <Folder Include="Content\Graphics\" />
+    <Folder Include="Content\" />
     <Folder Include="Util\" />
     <Folder Include="World\Objects\" />
   </ItemGroup>

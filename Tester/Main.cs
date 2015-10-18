@@ -35,7 +35,7 @@ namespace XManager
 
 		protected override void Initialize()
 		{
-			Window.Title = "XManager";
+			Window.Title = "Tester";
 			IsMouseVisible = true;
 
 			Engine.Initialize(this);
