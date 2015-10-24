@@ -8,68 +8,48 @@ namespace DXPrimitiveFramework
 {
 	public class PArc : Primitive
 	{
-		private const int DEFAULT_SIDES = 8;
+		private const int DEFAULT_SIDES = 32;
 		protected float radius;
+		protected float arcDegrees;
 		protected int sides;
 
-		public PArc( PArc arc )
-			: base( arc )
+		public PArc(PArc arc) : base(arc)
 		{
 			this.radius = arc.radius;
-			this.degrees = arc.degrees;
+			this.arcDegrees = arc.degrees;
 			this.sides = arc.sides;
 		}
 
-		public PArc( float x, float y, float radius, float degrees, bool filled )
-			: this( x, y, radius, degrees, DEFAULT_SIDES, filled )
-		{
-		}
+		public PArc(float x, float y, float radius, float degrees, bool filled) : this(x, y, radius, degrees, DEFAULT_SIDES, filled) { }
 
-		public PArc( float x, float y, float radius, float degrees, uint thickness )
-			: this( x, y, radius, degrees, DEFAULT_SIDES, thickness )
-		{
-		}
+		public PArc(float x, float y, float radius, float degrees, uint thickness) : this(x, y, radius, degrees, DEFAULT_SIDES, thickness) { }
 
-		public PArc( float x, float y, float radius, float degrees, int sides, bool filled )
-			: this( new Vector2( x, y ), radius, degrees, sides, filled )
-		{
-		}
+		public PArc(float x, float y, float radius, float degrees, int sides, bool filled) : this(new Vector2(x, y), radius, degrees, sides, filled) { }
 
-		public PArc( float x, float y, float radius, float degrees, int sides, uint thickness )
-			: this( new Vector2( x, y ), radius, degrees, sides, thickness )
-		{
-		}
+		public PArc(float x, float y, float radius, float degrees, int sides, uint thickness) : this(new Vector2(x, y), radius, degrees, sides, thickness) { }
 
-		public PArc( Vector2 position, float radius, float degrees, bool filled )
-			: this( position, radius, degrees, DEFAULT_SIDES, filled )
-		{
-		}
+		public PArc(Vector2 position, float radius, float degrees, bool filled) : this(position, radius, degrees, DEFAULT_SIDES, filled) { }
 
-		public PArc( Vector2 position, float radius, float degrees, uint thickness )
-			: this( position, radius, degrees, DEFAULT_SIDES, thickness )
-		{
-		}
+		public PArc(Vector2 position, float radius, float degrees, uint thickness) : this(position, radius, degrees, DEFAULT_SIDES, thickness) { }
 
-		public PArc( Vector2 position, float radius, float degrees, int sides, bool filled )
-			: base( filled )
+		public PArc(Vector2 position, float radius, float degrees, int sides, bool filled) : base(filled)
 		{
 			this.position = position;
 			this.radius = radius;
 			this.sides = sides;
-			this.degrees = degrees;
+			this.arcDegrees = degrees;
 		}
 
-		public PArc( Vector2 position, float radius, float degrees, int sides, uint thickness )
-			: base( thickness )
+		public PArc(Vector2 position, float radius, float degrees, int sides, uint thickness) : base(thickness)
 		{
-			if( thickness >= radius )
+			if (thickness >= radius)
 			{
-				throw new ArgumentException( "Arc thickness cannot be greater than radius - 1 (Current max thickness: " + ( radius - 1 ) + ")." );
+				throw new ArgumentException("Arc thickness cannot be greater than radius - 1 (Current max thickness: " + (radius - 1) + ").");
 			}
 			this.position = position;
 			this.radius = radius;
 			this.sides = sides;
-			this.degrees = degrees;
+			this.arcDegrees = degrees;
 		}
 
 		public float Radius
@@ -92,73 +72,46 @@ namespace DXPrimitiveFramework
 			}
 		}
 
-		internal override List<PolygonPoint> GetPoints()
+		internal override List<PolygonPoint> GetPoints(float thickness = 0)
 		{
 			List<PolygonPoint> points = new List<PolygonPoint>();
 
-			//float degreeStep = degrees / sides;
-			//int steps = sides + 1;
-			//float reminderStep = degreeStep - (int)degreeStep;
+			int arcSides = (int)Math.Round((arcDegrees / 360f) * sides, MidpointRounding.AwayFromZero);
+			int halfArcSides = arcSides / 2;
+			float degreeStep = arcDegrees / arcSides;
+			float r = radius - thickness;
 
-			//if(reminderStep != 0) {
-			//    steps--;
-			//}
+			//points.Add(new PolygonPoint(0 + thickness, 0 + thickness));
+			points.Add(GetPoint(degreeStep * -halfArcSides, thickness));
 
-			for( int i = 0; i < degrees; i++ )
+			for (int i = -halfArcSides; i <= halfArcSides; i++)
 			{
-				float radAngle = MathUtil.DegreesToRadians( i );
-				float x = (float)Math.Cos( radAngle ) * radius;
-				float y = (float)Math.Sin( radAngle ) * radius;
+				//float radAngle = MathUtil.DegreesToRadians(degreeStep * i) - MathUtil.PiOverTwo;
+				//double x = Math.Cos(radAngle) * r;
+				//double y = Math.Sin(radAngle) * r;
 
-				points.Add( new PolygonPoint( x, y ) );
-			}
+				//points.Add(new PolygonPoint(x, y));
 
-			//if(reminderStep != 0) {
-			//    float radAngle = MathHelper.ToRadians(degreeStep * sides + reminderStep);
-			//    float x = (float)Math.Cos(radAngle) * radius;
-			//    float y = (float)Math.Sin(radAngle) * radius;
+				points.Add(GetPoint(degreeStep * i, r));
+            }
 
-			//    points.Add(new PolygonPoint(x, y));
-			//}
-
-			if( !Filled )
+			if (!Filled)
 			{
-				points.Add( points[ 0 ] );
+				points.Add(points[0]);
 			}
 
 			return points;
 		}
 
-		protected override Polygon GetPolygon()
+		private PolygonPoint GetPoint(float degrees, float radius)
 		{
-			Polygon poly = new Polygon( GetPoints() );
+			float radAngle = MathUtil.DegreesToRadians(degrees) - MathUtil.PiOverTwo;
+			double x = Math.Cos(radAngle) * radius;
+			double y = Math.Sin(radAngle) * radius;
 
-			if( thickness > 0 )
-			{
-				List<PolygonPoint> holePoints = new List<PolygonPoint>();
-
-				float x;
-				float y;
-				float radAngle;
-				float degreeStep = 360f / sides;
-				float r = radius - thickness;
-				//int steps = sides + 1;
-
-				for( int i = 0; i < degrees; i++ )
-				{
-					radAngle = MathUtil.DegreesToRadians( i );
-					x = (float)( Math.Cos( radAngle ) * r );
-					y = (float)( Math.Sin( radAngle ) * r );
-
-					holePoints.Add( new PolygonPoint( x, y ) );
-				}
-
-				Polygon hole = new Polygon( holePoints );
-				poly.AddHole( hole );
-			}
-
-			return poly;
+			return new PolygonPoint(x, y);
 		}
+
 
 		//public override bool Intersects(float x, float y) {
 		//    float distX = x - position.X;

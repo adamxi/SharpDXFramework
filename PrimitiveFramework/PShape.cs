@@ -60,7 +60,7 @@ namespace DXPrimitiveFramework
 			PrimitiveCreated = false;
 		}
 
-		internal override List<PolygonPoint> GetPoints()
+		internal override List<PolygonPoint> GetPoints(float thickness = 0)
 		{
 			List<PolygonPoint> points = new List<PolygonPoint>( vertices.Count );
 			foreach( Vector2 vertex in vertices )

@@ -6,7 +6,7 @@ using MathUtil = SharpDX.MathUtil;
 
 namespace DXPrimitiveFramework
 {
-    public abstract class Primitive
+	public abstract class Primitive
 	{
 		protected List<VertexPositionColor> vertexPositionColors;
 		protected VertexPositionColor[] tranformedVPCs;
@@ -300,11 +300,19 @@ namespace DXPrimitiveFramework
 			PolygonCount = 0;
 		}
 
-		internal abstract List<PolygonPoint> GetPoints();
+		internal abstract List<PolygonPoint> GetPoints(float thickness = 0);
 
 		protected virtual Polygon GetPolygon()
 		{
-			return new Polygon(GetPoints());
+			Polygon poly = new Polygon(GetPoints());
+
+			if (thickness > 0)
+			{
+				Polygon hole = new Polygon(GetPoints(thickness));
+				poly.AddHole(hole);
+			}
+
+			return poly;
 		}
 
 		protected void InitializeVertexData()

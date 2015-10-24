@@ -12,39 +12,39 @@ namespace DXPrimitiveFramework
 		protected float radius;
 		protected int sides;
 
-		public PCircle( PCircle circle )
-			: base( circle )
+		public PCircle(PCircle circle)
+			: base(circle)
 		{
 			this.radius = circle.radius;
 			this.sides = circle.sides;
 		}
 
-		public PCircle( float x, float y, float radius, bool filled ) : this( x, y, radius, DEFAULT_SIDES, filled ) { }
+		public PCircle(float x, float y, float radius, bool filled) : this(x, y, radius, DEFAULT_SIDES, filled) { }
 
-		public PCircle( float x, float y, float radius, float thickness ) : this( x, y, radius, DEFAULT_SIDES, thickness ) { }
+		public PCircle(float x, float y, float radius, float thickness) : this(x, y, radius, DEFAULT_SIDES, thickness) { }
 
-		public PCircle( float x, float y, float radius, int sides, bool filled ) : this( new Vector2( x, y ), radius, sides, filled ) { }
+		public PCircle(float x, float y, float radius, int sides, bool filled) : this(new Vector2(x, y), radius, sides, filled) { }
 
-		public PCircle( float x, float y, float radius, int sides, float thickness ) : this( new Vector2( x, y ), radius, sides, thickness ) { }
+		public PCircle(float x, float y, float radius, int sides, float thickness) : this(new Vector2(x, y), radius, sides, thickness) { }
 
-		public PCircle( Vector2 position, float radius, bool filled ) : this( position, radius, DEFAULT_SIDES, filled ) { }
+		public PCircle(Vector2 position, float radius, bool filled) : this(position, radius, DEFAULT_SIDES, filled) { }
 
-		public PCircle( Vector2 position, float radius, float thickness ) : this( position, radius, DEFAULT_SIDES, thickness ) { }
+		public PCircle(Vector2 position, float radius, float thickness) : this(position, radius, DEFAULT_SIDES, thickness) { }
 
-		public PCircle( Vector2 position, float radius, int sides, bool filled )
-			: base( filled )
+		public PCircle(Vector2 position, float radius, int sides, bool filled)
+			: base(filled)
 		{
 			this.position = position;
 			this.radius = radius;
 			this.sides = sides;
 		}
 
-		public PCircle( Vector2 position, float radius, int sides, float thickness )
-			: base( thickness )
+		public PCircle(Vector2 position, float radius, int sides, float thickness)
+			: base(thickness)
 		{
-			if( thickness >= radius )
+			if (thickness >= radius)
 			{
-				throw new ArgumentException( "Circle thickness cannot be greater than radius - 1 (Current max thickness: " + ( radius - 1 ) + ")." );
+				throw new ArgumentException("Circle thickness cannot be greater than radius - 1 (Current max thickness: " + (radius - 1) + ").");
 			}
 			this.position = position;
 			this.radius = radius;
@@ -71,80 +71,48 @@ namespace DXPrimitiveFramework
 			}
 		}
 
-		internal override List<PolygonPoint> GetPoints()
+		internal override List<PolygonPoint> GetPoints(float thickness = 0)
 		{
 			List<PolygonPoint> points = new List<PolygonPoint>();
 
-			double x;
-			double y;
-			float radAngle;
 			float degreeStep = 360f / sides;
+			float r = radius - thickness;
 
-			for( int i = 0; i < sides; i++ )
+			for (int i = 0; i < sides; i++)
 			{
-				radAngle = MathUtil.DegreesToRadians( degreeStep * i );
-				x = Math.Cos( radAngle ) * radius;
-				y = Math.Sin( radAngle ) * radius;
+				float radAngle = MathUtil.DegreesToRadians(degreeStep * i);
+				double x = Math.Cos(radAngle) * r;
+				double y = Math.Sin(radAngle) * r;
 
-				points.Add( new PolygonPoint( x, y ) );
+				points.Add(new PolygonPoint(x, y));
 			}
 
-			if( !Filled )
+			if (!Filled)
 			{
-				points.Add( points[ 0 ] );
+				points.Add(points[0]);
 			}
 
 			return points;
 		}
 
-		protected override Polygon GetPolygon()
-		{
-			Polygon poly = new Polygon( GetPoints() );
-
-			if( thickness > 0 )
-			{
-				List<PolygonPoint> holePoints = new List<PolygonPoint>();
-
-				float x;
-				float y;
-				float radAngle;
-				float degreeStep = 360f / sides;
-				float r = radius - thickness;
-
-				for( int i = 0; i < sides; i++ )
-				{
-					radAngle = MathUtil.DegreesToRadians( degreeStep * i );
-					x = (float)( Math.Cos( radAngle ) * r );
-					y = (float)( Math.Sin( radAngle ) * r );
-
-					holePoints.Add( new PolygonPoint( x, y ) );
-				}
-
-				Polygon hole = new Polygon( holePoints );
-				poly.AddHole( hole );
-			}
-
-			return poly;
-		}
-
-		public override bool Intersects( float x, float y )
+		public override bool Intersects(float x, float y)
 		{
 			float distX = x - position.X;
 			float distY = y - position.Y;
 			float radius = this.radius * scale.X;
-			float distSquared = ( distX * distX ) + ( distY * distY );
+			float distSquared = (distX * distX) + (distY * distY);
 			float radiusSquared = radius * radius;
 
-			if( thickness > 1 )
+			if (thickness > 1)
 			{
-				float innerRadiusSquared = ( radius - thickness ) * ( radius - thickness );
+				float innerRadiusSquared = (radius - thickness) * (radius - thickness);
 
-				if( distSquared <= radiusSquared && distSquared > innerRadiusSquared )
+				if (distSquared <= radiusSquared && distSquared > innerRadiusSquared)
 				{
 					return true;
 				}
 			}
-			else if( distSquared <= radiusSquared )
+			else if (distSquared <= radiusSquared)
 			{
 				return true;
 			}

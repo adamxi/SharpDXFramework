@@ -97,8 +97,11 @@ namespace DXFramework.Util
 			get { return cameraPos; }
 			set
 			{
-				cameraPos = value;
-				UpdateTransformations();
+				if (cameraPos != value)
+				{
+					cameraPos = value;
+					UpdateTransformations();
+				}
 			}
 		}
 
@@ -139,17 +142,17 @@ namespace DXFramework.Util
 
 		#region Methods
 		/// <summary>
-		/// Initializes camera movement.
+		/// Initiates camera cursort movement.
 		/// </summary>
-		public void InitializeMovement()
+		public void InitiateCursorMovement()
 		{
 			localCursorPos = InputManager.MousePosition;
 		}
 
 		/// <summary>
-		/// Handles camera movement.
+		/// Handles camera cursor movement.
 		/// </summary>
-		public void DoMovement()
+		public void DoCursorMovement()
 		{
 			oldLocalCursorPos = localCursorPos;
 			localCursorPos = InputManager.MousePosition;
@@ -189,6 +192,11 @@ namespace DXFramework.Util
 		/// <param name="amount">Amount to move the camera in local-space.</param>
 		public void Move( Vector2 amount )
 		{
+			if (amount == Vector2.Zero)
+			{
+				return;
+			}
+
 			Position -= amount * invZoom;
 		}
 

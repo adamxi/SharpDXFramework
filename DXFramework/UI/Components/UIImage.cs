@@ -68,13 +68,13 @@ namespace DXFramework.UI
 					PrimitiveBatch.Begin();
 					PRect rect = new PRect( clip, 1 );
 					rect.Color = Color.Yellow;
-					PrimitiveBatch.Draw( rect );
+					rect.Draw();
 					PrimitiveBatch.End();
 
 					PrimitiveBatch.Begin();
 					rect = new PRect( inter, 1 );
 					rect.Color = Color.Magenta;
-					PrimitiveBatch.Draw( rect );
+					rect.Draw();
 					PrimitiveBatch.End();
 				}
 

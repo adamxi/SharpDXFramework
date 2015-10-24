@@ -753,7 +753,7 @@ namespace DXFramework.UI
 				PrimitiveBatch.Begin();
 				PRect rect = new PRect(Bounds, 3);
 				rect.Color = DebugColor;
-				PrimitiveBatch.Draw(rect);
+				rect.Draw();
 				PrimitiveBatch.End();
 			}
 		}

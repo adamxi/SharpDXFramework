@@ -57,7 +57,7 @@ namespace DXPrimitiveFramework
 			}
 		}
 
-		internal override List<PolygonPoint> GetPoints()
+		internal override List<PolygonPoint> GetPoints(float thickness = 0)
 		{
 			List<PolygonPoint> points = new List<PolygonPoint>(){
                 new PolygonPoint(0, 0),
@@ -86,7 +86,7 @@ namespace DXPrimitiveFramework
                 new PolygonPoint(bottomRight.X, bottomRight.Y),
                 new PolygonPoint(bottomLeft.X, bottomLeft.Y)
             };
-
+			
 			return new Polygon( points );
 		}
 	}

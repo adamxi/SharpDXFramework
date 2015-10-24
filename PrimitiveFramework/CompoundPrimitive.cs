@@ -13,7 +13,7 @@ namespace DXPrimitiveFramework
         public CompoundPrimitive()
         {
             primitives = new List<Primitive>();
-        }
+		}
 
         public CompoundPrimitive(CompoundPrimitive compoundPrimitive)
             : base(compoundPrimitive)
@@ -67,7 +67,7 @@ namespace DXPrimitiveFramework
             get { return alpha; }
             set
             {
-                value = (int)SharpDX.MathUtil.Clamp(value, 0, 255);
+                value = MathUtil.Clamp(value, 0, 255);
                 if (alpha != value)
                 {
                     foreach (Primitive primitive in primitives)
@@ -164,7 +164,7 @@ namespace DXPrimitiveFramework
             tranformedVPCs = vpc.ToArray();
         }
 
-        internal override List<PolygonPoint> GetPoints()
+        internal override List<PolygonPoint> GetPoints(float thickness = 0)
         {
             throw new NotImplementedException();
         }

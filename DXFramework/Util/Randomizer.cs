@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using SharpDX;
 
 namespace DXFramework.Util
@@ -27,7 +29,7 @@ namespace DXFramework.Util
 		/// Returns true if a given probability is greater than the next random number.
 		/// </summary>
 		/// <param name="probability">Decimal probability value between 0 and 1 inclusive.</param>
-		public static bool DoAction( float probability )
+		public static bool DoAction(double probability)
 		{
 			return probability > random.NextDouble();
 		}
@@ -37,9 +39,9 @@ namespace DXFramework.Util
 		/// </summary>
 		/// <param name="min">Inclusive minimum value.</param>
 		/// <param name="max">Inclusive maximum value.</param>
-		public static int Range( int min, int max )
+		public static int Range(int min, int max)
 		{
-			return random.Next( min, max + 1 );
+			return random.Next(min, max + 1);
 		}
 
 		/// <summary>
@@ -47,9 +49,9 @@ namespace DXFramework.Util
 		/// </summary>
 		/// <param name="min">Inclusive minimum value.</param>
 		/// <param name="max">Inclusive maximum value.</param>
-		public static float Range( float min, float max )
+		public static float Range(float min, float max)
 		{
-			return min + ( max - min ) * (float)random.NextDouble();
+			return min + (max - min) * (float)random.NextDouble();
 		}
 
 		/// <summary>
@@ -57,9 +59,9 @@ namespace DXFramework.Util
 		/// </summary>
 		/// <param name="min">Inclusive minimum value.</param>
 		/// <param name="max">Inclusive maximum value.</param>
-		public static double Range( double min, double max )
+		public static double Range(double min, double max)
 		{
-			return min + ( max - min ) * random.NextDouble();
+			return min + (max - min) * random.NextDouble();
 		}
 
 		/// <summary>
@@ -67,11 +69,11 @@ namespace DXFramework.Util
 		/// </summary>
 		/// <param name="min">Inclusive minimum vector.</param>
 		/// <param name="max">Inclusive maximum vector.</param>
-		public static Vector2 Range( Vector2 min, Vector2 max )
+		public static Vector2 Range(Vector2 min, Vector2 max)
 		{
 			Vector2 vec = Vector2.Zero;
-			vec.X = min.X + ( max.X - min.X ) * (float)random.NextDouble();
-			vec.Y = min.Y + ( max.Y - min.Y ) * (float)random.NextDouble();
+			vec.X = min.X + (max.X - min.X) * (float)random.NextDouble();
+			vec.Y = min.Y + (max.Y - min.Y) * (float)random.NextDouble();
 			return vec;
 		}
 
@@ -81,21 +83,21 @@ namespace DXFramework.Util
 		/// <param name="min">Inclusive minimum vector.</param>
 		/// <param name="max">Inclusive maximum vector.</param>
 		/// <param name="randomVector">Random vector.</param>
-		public static void Range( ref Vector2 min, ref Vector2 max, out Vector2 randomVector )
+		public static void Range(ref Vector2 min, ref Vector2 max, out Vector2 randomVector)
 		{
-			randomVector.X = min.X + ( max.X - min.X ) * (float)random.NextDouble();
-			randomVector.Y = min.Y + ( max.Y - min.Y ) * (float)random.NextDouble();
+			randomVector.X = min.X + (max.X - min.X) * (float)random.NextDouble();
+			randomVector.Y = min.Y + (max.Y - min.Y) * (float)random.NextDouble();
 		}
 
 		/// <summary>
 		/// Returns a Vector2 from a random point within a rectangle region.
 		/// </summary>
 		/// <param name="region">Rectangle region to get random Vector2 from. Region boundaries are inclusive.</param>
-		public static Vector2 Range( Rectangle region )
+		public static Vector2 Range(Rectangle region)
 		{
 			Vector2 vec = Vector2.Zero;
-			vec.X = Range( region.Left, region.Right );
-			vec.Y = Range( region.Top, region.Bottom );
+			vec.X = Range(region.Left, region.Right);
+			vec.Y = Range(region.Top, region.Bottom);
 			return vec;
 		}
 
@@ -104,19 +106,54 @@ namespace DXFramework.Util
 		/// </summary>
 		/// <param name="region">Rectangle region to get random Vector2 from. Region boundaries are inclusive.</param>
 		/// <param name="randomVector">Random vector.</param>
-		public static void Range( ref Rectangle region, out Vector2 randomVector )
+		public static void Range(ref Rectangle region, out Vector2 randomVector)
 		{
-			randomVector.X = Range( region.Left, region.Right );
-			randomVector.Y = Range( region.Top, region.Bottom );
+			randomVector.X = Range(region.Left, region.Right);
+			randomVector.Y = Range(region.Top, region.Bottom);
 		}
 
 		/// <summary>
 		/// Returns a random element from the array.
 		/// </summary>
 		/// <typeparam name="T">Array type.</typeparam>
-		public static T RandomElement<T>( this T[] array )
+		public static T RandomElement<T>(this T[] array)
 		{
-			return array[ random.Next( array.Length ) ];
+			return array[random.Next(array.Length)];
+		}
+
+		///// <summary>
+		///// Shuffle a collection
+		///// http://stackoverflow.com/questions/273313/randomize-a-listt-in-c-sharp
+		///// </summary>
+		//public static IEnumerable<T> Shuffle<T>(this IEnumerable<T> collection)
+		//{
+		//	int n = collection.Count();
+		//	while (n > 1)
+		//	{
+		//		n--;
+		//		int k = random.Next(n + 1);
+		//		T value = collection[k];
+		//		collection[k] = collection[n];
+		//		collection[n] = value;
+		//	}
+		//}
+
+		public static IEnumerable<T> SelectRandom<T>(this IEnumerable<T> collection, int count)
+		{
+			int picked = 0;
+			double itemsLeft = collection.Count();
+			var enumerator = collection.GetEnumerator();
+
+			while (picked < count && enumerator.MoveNext())
+			{
+				double probability = count / itemsLeft--;
+
+				if (DoAction(probability))
+				{
+					picked++;
+					yield return enumerator.Current;
+				}
+			}
 		}
 	}
 }
