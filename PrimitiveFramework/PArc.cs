@@ -78,22 +78,17 @@ namespace DXPrimitiveFramework
 
 			int arcSides = (int)Math.Round((arcDegrees / 360f) * sides, MidpointRounding.AwayFromZero);
 			int halfArcSides = arcSides / 2;
-			float degreeStep = arcDegrees / arcSides;
-			float r = radius - thickness;
+			float offsetDegrees = MathUtil.RadiansToDegrees((float)Math.Tan(thickness / radius));
+			float degreeStep = (arcDegrees - offsetDegrees) / arcSides;
+			float r = radius - thickness * 0.5f;
+			float t = thickness - (thickness * (arcDegrees / 180)) / 2;
 
-			//points.Add(new PolygonPoint(0 + thickness, 0 + thickness));
-			points.Add(GetPoint(degreeStep * -halfArcSides, thickness));
+			points.Add(GetPoint(0, t));
 
 			for (int i = -halfArcSides; i <= halfArcSides; i++)
 			{
-				//float radAngle = MathUtil.DegreesToRadians(degreeStep * i) - MathUtil.PiOverTwo;
-				//double x = Math.Cos(radAngle) * r;
-				//double y = Math.Sin(radAngle) * r;
-
-				//points.Add(new PolygonPoint(x, y));
-
 				points.Add(GetPoint(degreeStep * i, r));
-            }
+			}
 
 			if (!Filled)
 			{
@@ -111,7 +106,6 @@ namespace DXPrimitiveFramework
 
 			return new PolygonPoint(x, y);
 		}
-
 
 		//public override bool Intersects(float x, float y) {
 		//    float distX = x - position.X;

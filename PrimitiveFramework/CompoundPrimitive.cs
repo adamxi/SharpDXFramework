@@ -102,7 +102,7 @@ namespace DXPrimitiveFramework
         /// </summary>
         public void Add(Primitive primitive)
         {
-            primitives.Add(primitive);
+            primitives.Insert(0, primitive);
         }
 
         /// <summary>

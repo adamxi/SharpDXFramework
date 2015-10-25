@@ -1,5 +1,6 @@
 ﻿using SharpDX;
 using SharpDX.Toolkit.Graphics;
+using System.Linq;
 
 namespace DXPrimitiveFramework
 {
