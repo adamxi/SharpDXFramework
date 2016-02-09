@@ -22,6 +22,11 @@ namespace DXPrimitiveFramework
 			batch = new PrimitiveBatch<VertexPositionColor>(graphicsDevice);
 		}
 
+		public static PrimitiveBatch<VertexPositionColor> Batch
+		{
+			get { return batch; }
+		}
+
 		public static int DrawCount { get; private set; }
 
 		#region Begin overloads
@@ -111,7 +116,7 @@ namespace DXPrimitiveFramework
 		/// Draws a primitive.
 		/// </summary>
 		/// <param name="primitive">Primitive to draw.</param>
-		public static void Draw(Primitive primitive)
+		internal static void Draw(Primitive primitive)
 		{
 			primitive.InitializeForDrawing();
 			_Draw(primitive);

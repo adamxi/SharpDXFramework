@@ -1,12 +1,15 @@
 ﻿using System.Collections.Generic;
 using Poly2Tri;
 using SharpDX;
+using SharpDX.Toolkit.Graphics;
 
 namespace DXPrimitiveFramework
 {
 	public class PLine : Primitive
 	{
 		private Vector2 end;
+		private VertexPositionColor vpcStart;
+		private VertexPositionColor vpcEnd;
 
 		public PLine(PLine line) : base(line)
 		{
@@ -21,6 +24,11 @@ namespace DXPrimitiveFramework
 			this.end.Y = endY - startY;
 			Slope = new Vector2(endX - endY) - new Vector2(startX, startY);
 			Slope.Normalize();
+
+			vpcStart.Position.X = startX;
+			vpcStart.Position.Y = startY;
+			vpcEnd.Position.X = endX;
+			vpcEnd.Position.Y = endY;
 		}
 
 		public PLine(Vector2 start, Vector2 end, uint thickness = 1) : base(thickness)
@@ -29,6 +37,11 @@ namespace DXPrimitiveFramework
 			this.end = end - start;
 			Slope = end - start;
 			Slope.Normalize();
+
+			vpcStart.Position.X = start.X;
+			vpcStart.Position.Y = start.Y;
+			vpcEnd.Position.X = end.X;
+			vpcEnd.Position.Y = end.Y;
 		}
 
 		public Vector2 Slope { get; private set; }
@@ -100,6 +113,18 @@ namespace DXPrimitiveFramework
 		public override void Draw()
 		{
 			base.Draw();
+			return;
+
+			InitializeForDrawing();
+			//if (thickness <= 1)
+			//{
+			//	PrimitiveBatch.Batch.DrawLine(vpcStart, vpcEnd);
+			//}
+			//else
+			{
+				//PrimitiveBatch.Draw(this);
+				PrimitiveBatch.Batch.Draw(PrimitiveType.LineStripWithAdjacency, TransformedVertexPositionColors);
+			}
 		}
 	}
 }

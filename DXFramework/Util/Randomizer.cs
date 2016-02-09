@@ -36,7 +36,7 @@ namespace DXFramework.Util
 
 		#region Random range
 		/// <summary>
-		/// Returns an integer betwean an inclusive minimum and an inclusive maximum range.
+		/// Returns an integer between an inclusive minimum and an inclusive maximum range.
 		/// </summary>
 		/// <param name="min">Inclusive minimum value.</param>
 		/// <param name="max">Inclusive maximum value.</param>
@@ -46,7 +46,7 @@ namespace DXFramework.Util
 		}
 
 		/// <summary>
-		/// Returns a float betwean an inclusive minimum and an inclusive maximum range.
+		/// Returns a float between an inclusive minimum and an inclusive maximum range.
 		/// </summary>
 		/// <param name="min">Inclusive minimum value.</param>
 		/// <param name="max">Inclusive maximum value.</param>
@@ -56,7 +56,7 @@ namespace DXFramework.Util
 		}
 
 		/// <summary>
-		/// Returns a double betwean an inclusive minimum and an inclusive maximum range.
+		/// Returns a double between an inclusive minimum and an inclusive maximum range.
 		/// </summary>
 		/// <param name="min">Inclusive minimum value.</param>
 		/// <param name="max">Inclusive maximum value.</param>
@@ -66,7 +66,7 @@ namespace DXFramework.Util
 		}
 
 		/// <summary>
-		/// Returns a Vector2 betwean an inclusive minimum and an inclusive maximum range.
+		/// Returns a Vector2 between an inclusive minimum and an inclusive maximum range.
 		/// </summary>
 		/// <param name="min">Inclusive minimum vector.</param>
 		/// <param name="max">Inclusive maximum vector.</param>
@@ -79,7 +79,7 @@ namespace DXFramework.Util
 		}
 
 		/// <summary>
-		/// Calculates a Vector2 betwean an inclusive minimum and an inclusive maximum range.
+		/// Calculates a Vector2 between an inclusive minimum and an inclusive maximum range.
 		/// </summary>
 		/// <param name="min">Inclusive minimum vector.</param>
 		/// <param name="max">Inclusive maximum vector.</param>
@@ -117,13 +117,11 @@ namespace DXFramework.Util
 		{
 			Vector2 pos = Vector2.Zero;
 
-			//double r = random.NextDouble(0, radius);
-			//double radians = random.NextDouble(0, Math.PI * 2);
-			//pos.X = (float)(Math.Cos(radians) * r);
-			//pos.Y = (float)(Math.Sin(radians) * r);
+			double angle = random.NextDouble(0, MathUtil.TwoPi);
+			double r = Math.Sqrt(random.NextDouble()) * radius;
+			pos.X = (float)(Math.Cos(angle) * r);
+			pos.Y = (float)(Math.Sin(angle) * r);
 
-			pos.X = (float)Range(-radius, radius);
-			pos.Y = (float)Range(-radius, radius);
 			return pos;
 		}
 		#endregion

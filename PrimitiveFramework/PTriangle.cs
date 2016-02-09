@@ -26,6 +26,13 @@ namespace DXPrimitiveFramework
 			this.c = new Vector2(lengthAB * 0.5f, -height);
 		}
 
+		public PTriangle(float lengthAB, float height, uint thickness) : base(thickness)
+		{
+			this.a = Vector2.Zero;
+			this.b = new Vector2(lengthAB, 0);
+			this.c = new Vector2(lengthAB * 0.5f, -height);
+		}
+
 		public PTriangle(Vector2 a, float lengthAB, float angleB, bool filled) : base(filled)
 		{
 			if (angleB >= 180)
