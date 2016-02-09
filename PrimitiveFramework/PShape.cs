@@ -8,21 +8,19 @@ namespace DXPrimitiveFramework
 	{
 		private List<Vector2> vertices;
 
-		public PShape( PShape shape )
-			: base( shape )
+		public PShape(PShape shape) : base(shape)
 		{
 			this.vertices = shape.vertices;
 		}
 
-		public PShape( bool filled )
-			: base( filled )
+		public PShape(bool filled) : base(filled)
 		{
 			vertices = new List<Vector2>();
 		}
 
 		public Vector2 FirstPoint
 		{
-			get { return vertices[ 0 ]; }
+			get { return vertices[0]; }
 		}
 
 		public List<Vector2> Points
@@ -30,42 +28,42 @@ namespace DXPrimitiveFramework
 			get { return vertices; }
 		}
 
-		public void AddVertices( List<Vector2> vertices )
+		public void AddVertices(List<Vector2> vertices)
 		{
-			foreach( Vector2 vertex in vertices )
+			foreach (Vector2 vertex in vertices)
 			{
-				AddVertex( vertex );
+				AddVertex(vertex);
 			}
 		}
 
-		public void AddVertex( float x, float y )
+		public void AddVertex(float x, float y)
 		{
-			AddVertex( new Vector2( x, y ) );
+			AddVertex(new Vector2(x, y));
 		}
 
-		public void AddVertex( Vector2 vertex )
+		public void AddVertex(Vector2 vertex)
 		{
-			vertices.Add( vertex );
+			vertices.Add(vertex);
 			PrimitiveCreated = false;
 		}
 
-		public void InsertVertex( int index, float x, float y )
+		public void InsertVertex(int index, float x, float y)
 		{
-			InsertVertex( index, new Vector2( x, y ) );
+			InsertVertex(index, new Vector2(x, y));
 		}
 
-		public void InsertVertex( int index, Vector2 vertex )
+		public void InsertVertex(int index, Vector2 vertex)
 		{
-			vertices.Insert( index, vertex );
+			vertices.Insert(index, vertex);
 			PrimitiveCreated = false;
 		}
 
 		internal override List<PolygonPoint> GetPoints(float thickness = 0)
 		{
-			List<PolygonPoint> points = new List<PolygonPoint>( vertices.Count );
-			foreach( Vector2 vertex in vertices )
+			List<PolygonPoint> points = new List<PolygonPoint>(vertices.Count);
+			foreach (Vector2 vertex in vertices)
 			{
-				points.Add( new PolygonPoint( vertex.X, vertex.Y ) );
+				points.Add(new PolygonPoint(vertex.X, vertex.Y));
 			}
 
 			//if( !Filled && points.Count > 2 )

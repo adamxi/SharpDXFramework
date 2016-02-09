@@ -1,5 +1,5 @@
 ﻿using DXFramework.Util;
-using SharpDX;
+using DXPrimitiveFramework;
 using SharpDX.Collections;
 using SharpDX.Toolkit;
 using SharpDX.Toolkit.Graphics;
@@ -29,9 +29,11 @@ namespace DXFramework.UI
 #if DEBUG
 			debugPanel = new UIDebugPanel();
 			//debugPanel.Size = new Vector2(460, 150);
-			
+
+			debugPanel.SetDebugValue("Primitives");
 			debugPanel.SetDebugValue("Game time");
 			debugPanel.SetDebugValue("UI time");
+			
 			debugPanel.SuspendLayout = false;
 			debugPanel.DoLayout();
 #endif
@@ -132,6 +134,7 @@ namespace DXFramework.UI
 				debugPanel.SetDebugValue("UI time", (drawProfiler.TotalElapsed + updateProfiler.TotalElapsed + layoutProfiler.TotalElapsed).ToString("0.00"));
 				debugPanel.SetDebugValue("  Draw", drawProfiler.FullOutput(2, 4));
 				debugPanel.SetDebugValue("  Layout", layoutProfiler.FullOutput());
+				debugPanel.SetDebugValue("Primitives", PrimitiveBatch.DrawCount.ToString());
 				spriteBatch.Begin();
 				debugPanel.Draw(spriteBatch);
 				spriteBatch.End();

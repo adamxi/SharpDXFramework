@@ -107,24 +107,50 @@ namespace DXPrimitiveFramework
 			return new PolygonPoint(x, y);
 		}
 
-		//public override bool Intersects(float x, float y) {
-		//    float distX = x - position.X;
-		//    float distY = y - position.Y;
-		//    float radius = this.radius * scale.X;
-		//    float distSquared = (distX * distX) + (distY * distY);
-		//    float radiusSquared = radius * radius;
+		public override bool Intersects(float x, float y)
+		{
+			float distX = x - TransformedPosition.X;
+			float distY = y - TransformedPosition.Y;
+			float radius = this.radius * TransformedScale.X;
+			float distSquared = (distX * distX) + (distY * distY);
+			float radiusSquared = radius * radius;
 
-		//    if(thickness > 1) {
-		//        float innerRadiusSquared = (radius - thickness) * (radius - thickness);
+			if (thickness > 1)
+			{
+				float t = thickness * TransformedScale.X;
+				float innerRadiusSquared = (radius - t) * (radius - t);
 
-		//        if(distSquared <= radiusSquared && distSquared > innerRadiusSquared) {
-		//            return true;
-		//        }
-		//    } else if(distSquared <= radiusSquared) {
-		//        return true;
-		//    }
+				if (distSquared <= radiusSquared && distSquared > innerRadiusSquared)
+				{
+					return true;
+				}
+			}
+			else if (distSquared <= radiusSquared)
+			{
+				float radians = (float)Math.Atan2(distY, distX) + MathUtil.Pi;
+				float angle = MathUtil.RadiansToDegrees(radians) - TransformedDegrees;
+				if (angle < 0)
+				{
+					angle += 360;
+				}
 
-		//    return false;
-		//}
+				// TODO: Pre-compute left and right angles
+				float leftAngle = arcDegrees * 0.5f;
+				float rightAngle = leftAngle + arcDegrees;
+
+				//Console.WriteLine("TransformedDegrees: " + TransformedDegrees);
+				//Console.WriteLine("Angle between: " + angle);
+				//Console.WriteLine("left: " + leftAngle + ", right: " + rightAngle);
+
+				if (angle < leftAngle || angle > rightAngle)
+				{
+					return false;
+				}
+				//Console.WriteLine("intersects");
+				return true;
+			}
+
+			return false;
+		}
 	}
 }

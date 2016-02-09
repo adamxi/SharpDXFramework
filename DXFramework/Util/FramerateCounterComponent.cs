@@ -11,6 +11,7 @@ namespace DXFramework.Util
 	/// </summary>
 	public class FrameRateCounter : GameSystem
 	{
+		private static readonly TimeSpan oneSec = TimeSpan.FromSeconds(1);
 		private TimeSpan elapsedTime = TimeSpan.Zero;
 		private NumberFormatInfo format;
 		private int frameCounter;
@@ -42,12 +43,12 @@ namespace DXFramework.Util
 		{
 			elapsedTime += gameTime.ElapsedGameTime;
 
-			if( elapsedTime <= TimeSpan.FromSeconds( 1 ) )
+			if( elapsedTime <= oneSec)
 			{
 				return;
 			}
 
-			elapsedTime -= TimeSpan.FromSeconds( 1 );
+			elapsedTime -= oneSec;
 			frameRate = frameCounter;
 			frameCounter = 0;
 			fpsString = string.Format( format, "{0}", frameRate );

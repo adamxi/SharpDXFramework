@@ -176,11 +176,11 @@ namespace XManager.Scenes
 				if (InputManager.Pressed(MouseButton.Right) || InputManager.Pressed(MouseButton.Left))
 				{
 					//System.Console.WriteLine("Click");
-					cam.InitializeMovement();
+					cam.InitiateCursorMovement();
 				}
 				else if (InputManager.Held(MouseButton.Right) || InputManager.Held(MouseButton.Left))
 				{
-					cam.DoMovement();
+					cam.DoCursorMovement();
 				}
 			}
 		}

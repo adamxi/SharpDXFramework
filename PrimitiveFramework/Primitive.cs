@@ -22,6 +22,7 @@ namespace DXPrimitiveFramework
 		protected int alpha;
 		protected bool filled;
 		protected float thickness;
+		private float oldThickness;
 		private bool primitiveCreated;
 
 		protected Matrix transform;
@@ -36,17 +37,17 @@ namespace DXPrimitiveFramework
 		/// <param name="primitive">Primitive to copy.</param>
 		public Primitive(Primitive primitive)
 		{
-			this.vertexPositionColors = new List<VertexPositionColor>();
-			this.vertexColors = new List<Color>();
-			this.primitiveType = primitive.primitiveType;
-			this.color = primitive.color;
-			this.position = primitive.position;
-			this.origin = primitive.origin;
-			this.scale = primitive.scale;
-			this.degrees = primitive.degrees;
-			this.alpha = primitive.alpha;
-			this.filled = primitive.filled;
-			this.thickness = primitive.thickness;
+			vertexPositionColors = new List<VertexPositionColor>();
+			vertexColors = new List<Color>();
+			primitiveType = primitive.primitiveType;
+			color = primitive.color;
+			position = primitive.position;
+			origin = primitive.origin;
+			scale = primitive.scale;
+			degrees = primitive.degrees;
+			alpha = primitive.alpha;
+			filled = primitive.filled;
+			thickness = primitive.thickness;
 		}
 
 		internal Primitive()
@@ -58,14 +59,13 @@ namespace DXPrimitiveFramework
 
 		public Primitive(bool filled)
 		{
-			this.filled = filled;
+			Filled = filled;
 			Init();
 		}
 
 		public Primitive(float thickness)
 		{
-			this.thickness = thickness;
-			this.filled = thickness > 1;
+			Thickness = thickness;
 			Init();
 		}
 
@@ -73,7 +73,6 @@ namespace DXPrimitiveFramework
 		{
 			vertexPositionColors = new List<VertexPositionColor>();
 			vertexColors = new List<Color>();
-			primitiveType = filled ? PrimitiveType.TriangleList : PrimitiveType.LineList;
 			color = Color.White;
 			alpha = color.A;
 			scale = Vector2.One;
@@ -81,21 +80,11 @@ namespace DXPrimitiveFramework
 
 		#region Properties
 		public bool UpdateTransform { get; set; }
+
 		protected bool PrimitiveCreated
 		{
-			get
-			{
-				return primitiveCreated;
-			}
-
-			set
-			{
-				primitiveCreated = value;
-				if (value == false)
-				{
-					"".ToCharArray();
-				}
-			}
+			get { return primitiveCreated; }
+			set { primitiveCreated = value; }
 		}
 
 		/// <summary>
@@ -114,6 +103,15 @@ namespace DXPrimitiveFramework
 				if (filled != value)
 				{
 					filled = value;
+					if (filled)
+					{
+						oldThickness = thickness;
+						thickness = 0;
+					}
+					else
+					{
+						thickness = 1;
+					}
 					primitiveType = value ? PrimitiveType.TriangleList : PrimitiveType.LineList;
 					PrimitiveCreated = false;
 				}
@@ -121,11 +119,20 @@ namespace DXPrimitiveFramework
 		}
 
 		/// <summary>
-		/// Primitive thickness. Must be a positive value (uint).
+		/// Primitive thickness. Must be a positive value.
 		/// </summary>
 		public float Thickness
 		{
 			get { return thickness; }
+			set
+			{
+				if (thickness != value)
+				{
+					thickness = value;
+					primitiveType = value > 1 ? PrimitiveType.TriangleList : PrimitiveType.LineList;
+					PrimitiveCreated = false;
+				}
+			}
 		}
 
 		/// <summary>
@@ -139,11 +146,14 @@ namespace DXPrimitiveFramework
 				if (scale != value)
 				{
 					scale = value;
+					TransformedScale = scale;
 					scaleMatrix = Matrix.Scaling(new Vector3(scale, 0f));
 					UpdateTransform = true;
 				}
 			}
 		}
+
+		public virtual Vector2 TransformedScale { get; internal set; }
 
 		/// <summary>
 		/// Primitive position.
@@ -161,6 +171,8 @@ namespace DXPrimitiveFramework
 				}
 			}
 		}
+
+		public Vector2 TransformedPosition { get; private set; }
 
 		/// <summary>
 		/// Primitive origin. Origin affects the drawn position of the primitive.
@@ -182,28 +194,36 @@ namespace DXPrimitiveFramework
 		/// <summary>
 		/// Primitive degrees from 0 to 360.
 		/// </summary>
-		public float Degrees
+		public virtual float Degrees
 		{
 			get { return degrees; }
 			set
 			{
-				value %= 360;
-				if (value > 360)
-				{
-					value -= 360;
-				}
-				else if (value < 0)
-				{
-					value += 360;
-				}
+				value = Warp(value, 0, 360);
 				if (degrees != value)
 				{
 					degrees = value;
+					TransformedDegrees = value;
 					rotationMatrix = Matrix.RotationZ(MathUtil.DegreesToRadians(degrees));
 					UpdateTransform = true;
 				}
 			}
 		}
+
+		public float Warp(float value, float min, float max)
+		{
+			while (value > max)
+			{
+				value -= max - min;
+			}
+			while (value < min)
+			{
+				value += max - min;
+			}
+			return value;
+		}
+
+		public virtual float TransformedDegrees { get; internal set; }
 
 		/// <summary>
 		/// Primitive color.
@@ -375,22 +395,18 @@ namespace DXPrimitiveFramework
 			if (UpdateTransform)
 			{
 				Matrix transform = GetTransformation();
-
-				for (int i = vertexPositionColors.Count; --i >= 0;)
-				{
-					VertexPositionColor vpc = vertexPositionColors[i];
-					Vector3.Transform(ref vpc.Position, ref transform, out vpc.Position);
-					vpc.Color = color;
-					tranformedVPCs[i] = vpc;
-				}
-
+				UpdateTransformation(ref transform);
 				UpdateTransform = false;
 			}
 		}
 
-		internal virtual void UpdateTransformation(ref Matrix parentTransform)
+		internal virtual void UpdateTransformation(ref Matrix transform)
 		{
-			Matrix transform = GetTransformation() * parentTransform;
+			Vector4 tp;
+			Vector2.Transform(ref position, ref transform, out tp);
+			TransformedPosition = new Vector2(tp.X, tp.Y);
+
+			//TransformedScale = new Vector2(transform.ScaleVector.X, transform.ScaleVector.Y);
 
 			for (int i = vertexPositionColors.Count; --i >= 0;)
 			{
@@ -447,7 +463,7 @@ namespace DXPrimitiveFramework
 		/// Draws the primitive.
 		/// Same as calling PrimitiveBatch.Draw().
 		/// </summary>
-		public void Draw()
+		public virtual void Draw()
 		{
 			PrimitiveBatch.Draw(this);
 		}
@@ -466,10 +482,15 @@ namespace DXPrimitiveFramework
 		/// <summary>
 		/// Checks if a position is contained within the primitive.
 		/// </summary>
-		/// <param name="x">x coordinat.</param>
-		/// <param name="y">y coordinat.</param>
+		/// <param name="x">x coordinate.</param>
+		/// <param name="y">y coordinate.</param>
 		public virtual bool Intersects(float x, float y)
 		{
+			if (!primitiveCreated)
+			{
+				return false;
+			}
+
 			if (primitiveType == PrimitiveType.TriangleList)
 			{
 				Vector2 A = Vector2.Zero;

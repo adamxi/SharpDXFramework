@@ -22,6 +22,8 @@ namespace DXPrimitiveFramework
 			batch = new PrimitiveBatch<VertexPositionColor>(graphicsDevice);
 		}
 
+		public static int DrawCount { get; private set; }
+
 		#region Begin overloads
 		/// <summary>
 		/// Must be called prior to any Draw() calls.
@@ -29,6 +31,7 @@ namespace DXPrimitiveFramework
 		/// </summary>
 		public static void Begin()
 		{
+			DrawCount = 0;
 			basicEffect.Projection = Matrix.OrthoOffCenterRH(0f, graphicsDevice.Viewport.Width, graphicsDevice.Viewport.Height, 0f, 0f, 1f);
 			ApplyEffect();
 			batch.Begin();
@@ -41,6 +44,7 @@ namespace DXPrimitiveFramework
 		/// <param name="projection">The projection.</param>
 		public static void Begin(Matrix projection)
 		{
+			DrawCount = 0;
 			basicEffect.Projection = projection;
 			ApplyEffect();
 			batch.Begin();
@@ -54,6 +58,7 @@ namespace DXPrimitiveFramework
 		/// <param name="view">The view.</param>
 		public static void Begin(Matrix projection, Matrix view)
 		{
+			DrawCount = 0;
 			basicEffect.Projection = projection;
 			basicEffect.View = view;
 			ApplyEffect();
@@ -67,6 +72,7 @@ namespace DXPrimitiveFramework
 		/// <param name="projection">The projection.</param>
 		public static void Begin(ref Matrix projection)
 		{
+			DrawCount = 0;
 			basicEffect.Projection = projection;
 			ApplyEffect();
 			batch.Begin();
@@ -80,6 +86,7 @@ namespace DXPrimitiveFramework
 		/// <param name="view">The view.</param>
 		public static void Begin(ref Matrix projection, ref Matrix view)
 		{
+			DrawCount = 0;
 			basicEffect.Projection = projection;
 			basicEffect.View = view;
 			ApplyEffect();
@@ -118,6 +125,7 @@ namespace DXPrimitiveFramework
 			}
 			else
 			{
+				DrawCount++;
 				batch.Draw(primitive.PrimitiveType, primitive.TransformedVertexPositionColors);
 			}
 		}

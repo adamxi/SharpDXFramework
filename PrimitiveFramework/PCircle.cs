@@ -12,8 +12,7 @@ namespace DXPrimitiveFramework
 		protected float radius;
 		protected int sides;
 
-		public PCircle(PCircle circle)
-			: base(circle)
+		public PCircle(PCircle circle) : base(circle)
 		{
 			this.radius = circle.radius;
 			this.sides = circle.sides;
@@ -31,16 +30,14 @@ namespace DXPrimitiveFramework
 
 		public PCircle(Vector2 position, float radius, float thickness) : this(position, radius, DEFAULT_SIDES, thickness) { }
 
-		public PCircle(Vector2 position, float radius, int sides, bool filled)
-			: base(filled)
+		public PCircle(Vector2 position, float radius, int sides, bool filled) : base(filled)
 		{
 			this.position = position;
 			this.radius = radius;
 			this.sides = sides;
 		}
 
-		public PCircle(Vector2 position, float radius, int sides, float thickness)
-			: base(thickness)
+		public PCircle(Vector2 position, float radius, int sides, float thickness) : base(thickness)
 		{
 			if (thickness >= radius)
 			{
@@ -97,15 +94,16 @@ namespace DXPrimitiveFramework
 
 		public override bool Intersects(float x, float y)
 		{
-			float distX = x - position.X;
-			float distY = y - position.Y;
-			float radius = this.radius * scale.X;
+			float distX = x - TransformedPosition.X;
+			float distY = y - TransformedPosition.Y;
+			float radius = this.radius * TransformedScale.X;
 			float distSquared = (distX * distX) + (distY * distY);
 			float radiusSquared = radius * radius;
 
 			if (thickness > 1)
 			{
-				float innerRadiusSquared = (radius - thickness) * (radius - thickness);
+				float t = thickness * TransformedScale.X;
+				float innerRadiusSquared = (radius - t) * (radius - t);
 
 				if (distSquared <= radiusSquared && distSquared > innerRadiusSquared)
 				{

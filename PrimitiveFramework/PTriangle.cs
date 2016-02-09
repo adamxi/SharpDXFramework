@@ -19,6 +19,13 @@ namespace DXPrimitiveFramework
 			this.c = triangle.c;
 		}
 
+		public PTriangle(float lengthAB, float height, bool filled) : base(filled)
+		{
+			this.a = Vector2.Zero;
+			this.b = new Vector2(lengthAB, 0);
+			this.c = new Vector2(lengthAB * 0.5f, -height);
+		}
+
 		public PTriangle(Vector2 a, float lengthAB, float angleB, bool filled) : base(filled)
 		{
 			if (angleB >= 180)
@@ -51,13 +58,17 @@ namespace DXPrimitiveFramework
 			this.c = c;
 		}
 
-		public PTriangle(Vector2 a, Vector2 b, Vector2 c, uint thickness)
-			: base(thickness)
+		public PTriangle(Vector2 a, Vector2 b, Vector2 c, uint thickness) : base(thickness)
 		{
 			this.position = a;
 			this.a = a;
 			this.b = b;
 			this.c = c;
+		}
+
+		public Vector2 C
+		{
+			get { return c; }
 		}
 
 		internal override List<PolygonPoint> GetPoints(float thickness = 0)

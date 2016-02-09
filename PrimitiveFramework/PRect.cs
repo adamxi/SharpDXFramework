@@ -10,8 +10,7 @@ namespace DXPrimitiveFramework
 		protected float width;
 		protected float height;
 
-		public PRect(PRect rect)
-			: base(rect)
+		public PRect(PRect rect) : base(rect)
 		{
 			this.width = rect.width;
 			this.height = rect.height;
@@ -29,16 +28,14 @@ namespace DXPrimitiveFramework
 
 		public PRect(float x, float y, float width, float height, float thickness = 1f) : this(new Vector2(x, y), width, height, thickness) { }
 
-		public PRect(Vector2 position, float width, float height, bool filled)
-			: base(filled)
+		public PRect(Vector2 position, float width, float height, bool filled) : base(filled)
 		{
 			this.position = position;
 			this.width = Math.Max(width, 1);
 			this.height = Math.Max(height, 1);
 		}
 
-		public PRect(Vector2 position, float width, float height, float thickness = 1f)
-			: base(thickness)
+		public PRect(Vector2 position, float width, float height, float thickness = 1f) : base(thickness)
 		{
 			if (thickness >= width * 0.5f)
 			{
@@ -88,6 +85,16 @@ namespace DXPrimitiveFramework
 			}
 
 			return points;
+		}
+
+		public override bool Intersects(float x, float y)
+		{
+			if (x < TransformedPosition.X || x > TransformedPosition.X + width * TransformedScale.X ||
+				y < TransformedPosition.Y || y > TransformedPosition.Y + height * TransformedScale.Y)
+			{
+				return false;
+			}
+			return true;
 		}
 	}
 }

@@ -34,6 +34,7 @@ namespace DXFramework.Util
 			return probability > random.NextDouble();
 		}
 
+		#region Random range
 		/// <summary>
 		/// Returns an integer betwean an inclusive minimum and an inclusive maximum range.
 		/// </summary>
@@ -112,6 +113,22 @@ namespace DXFramework.Util
 			randomVector.Y = Range(region.Top, region.Bottom);
 		}
 
+		public static Vector2 Range(Vector2 position, double radius)
+		{
+			Vector2 pos = Vector2.Zero;
+
+			//double r = random.NextDouble(0, radius);
+			//double radians = random.NextDouble(0, Math.PI * 2);
+			//pos.X = (float)(Math.Cos(radians) * r);
+			//pos.Y = (float)(Math.Sin(radians) * r);
+
+			pos.X = (float)Range(-radius, radius);
+			pos.Y = (float)Range(-radius, radius);
+			return pos;
+		}
+		#endregion
+
+		#region Random selection
 		/// <summary>
 		/// Returns a random element from the array.
 		/// </summary>
@@ -138,6 +155,11 @@ namespace DXFramework.Util
 		//	}
 		//}
 
+		public static T SelectFirstRandom<T>(this IEnumerable<T> collection)
+		{
+			return collection.SelectRandom(1).First();
+		}
+
 		public static IEnumerable<T> SelectRandom<T>(this IEnumerable<T> collection, int count)
 		{
 			int picked = 0;
@@ -155,5 +177,6 @@ namespace DXFramework.Util
 				}
 			}
 		}
+		#endregion
 	}
 }
