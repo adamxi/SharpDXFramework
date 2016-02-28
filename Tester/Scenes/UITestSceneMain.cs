@@ -23,7 +23,7 @@ namespace XManager.Scenes
 
 		public override void LoadContent()
 		{
-			UIManager.DrawDebug = true;
+			UIManager.DrawDebug = false;
 			base.LoadContent();
 			cam = new Camera(GraphicsDevice);
 			uiManager = new UIManager();
