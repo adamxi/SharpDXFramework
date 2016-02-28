@@ -21,12 +21,11 @@ namespace DXFramework.SceneManagement
 		private Scene next;
 		private SpriteBatch spriteBatch;
 
-		public SceneManager( Game game )
-			: base( game )
+		public SceneManager(Game game) : base(game)
 		{
 			instance = this;
 			scenes = new Dictionary<string, Scene>();
-			spriteBatch = new SpriteBatch( game.GraphicsDevice );
+			spriteBatch = new SpriteBatch(game.GraphicsDevice);
 		}
 
 		#region Properties
@@ -62,14 +61,14 @@ namespace DXFramework.SceneManagement
 
 		#region Methods
 		/// <summary>
-		/// Adds a scene to the SceneManager.
+		/// Adds a persistent scene to the SceneManager.
 		/// </summary>
-		public void Add( Scene scene )
+		public void Add(Scene scene)
 		{
-			if( !scenes.ContainsKey( scene.Name ) )
+			if (!scenes.ContainsKey(scene.Name))
 			{
 				scene.SceneManager = this;
-				scenes.Add( scene.Name, scene );
+				scenes.Add(scene.Name, scene);
 			}
 		}
 
@@ -77,19 +76,19 @@ namespace DXFramework.SceneManagement
 		/// Removes a scene from the SceneManager.
 		/// </summary>
 		/// <param name="sceneName">Scene name.</param>
-		public void Remove( string sceneName )
+		public void Remove(string sceneName)
 		{
-			scenes.Remove( sceneName );
+			scenes.Remove(sceneName);
 		}
 
 		/// <summary>
 		/// Gets a scene from the SceneManager.
 		/// </summary>
 		/// <param name="sceneName">Scene name.</param>
-		public Scene Get( string sceneName )
+		public Scene Get(string sceneName)
 		{
 			Scene scene;
-			if( scenes.TryGetValue( sceneName, out scene ) )
+			if (scenes.TryGetValue(sceneName, out scene))
 			{
 				return scene;
 			}
@@ -98,19 +97,19 @@ namespace DXFramework.SceneManagement
 		}
 
 		/// <summary>
-		/// Sets the current scene.
+		/// Sets the current scene. The scene will is not be persistent through loads, if not added to the SceneManager.
 		/// </summary>
 		/// <typeparam name="T">Scene type. If this type has not been added to the SceneManager, a new temporary instance is created.</typeparam>
 		/// <param name="transition">Transition to use between current and next scene. Set to 'null' for no transition.</param>
-		public void Set<T>( Transition transition = null ) where T : Scene
+		public void Set<T>(Transition transition = null) where T : Scene
 		{
 			Scene scene;
-			if( !scenes.TryGetValue( typeof( T ).Name, out scene ) )
+			if (!scenes.TryGetValue(typeof(T).Name, out scene))
 			{
 				scene = Activator.CreateInstance<T>();
 			}
 
-			Set( scene, transition );
+			Set(scene, transition);
 		}
 
 		/// <summary>
@@ -118,16 +117,16 @@ namespace DXFramework.SceneManagement
 		/// </summary>
 		/// <param name="sceneName">Name of scene to set.</param>
 		/// <param name="transition">Transition to use between current and next scene. Set to 'null' for no transition.</param>
-		public void Set( string sceneName, Transition transition = null )
+		public void Set(string sceneName, Transition transition = null)
 		{
 			Scene scene;
-			if( scenes.TryGetValue( sceneName, out scene ) )
+			if (scenes.TryGetValue(sceneName, out scene))
 			{
-				Set( scene, transition );
+				Set(scene, transition);
 			}
 			else
 			{
-				throw new Exception( "Scene '" + sceneName + "' has not been added to the SceneManager" );
+				throw new Exception("Scene '" + sceneName + "' has not been added to the SceneManager");
 			}
 		}
 
@@ -136,15 +135,15 @@ namespace DXFramework.SceneManagement
 		/// </summary>
 		/// <param name="scene">Scene instance to set.</param>
 		/// <param name="transition">Transition to use between current and next scene. Set to 'null' for no transition.</param>
-		public void Set( Scene scene, Transition transition = null )
+		private void Set(Scene scene, Transition transition = null)
 		{
-			if( next != null && !next.Equals( scene ) ) // Makes sure that the next scene can only be set once.
+			if (next != null && !next.Equals(scene)) // Makes sure that the next scene can only be set once.
 			{
 				return;
 			}
 
 			next = scene;
-			if( transition != null )
+			if (transition != null)
 			{
 				this.transition = transition;
 				transition.SceneManager = this;
@@ -166,22 +165,22 @@ namespace DXFramework.SceneManagement
 			Current = next;
 			next = null;
 
-			if( Current.SceneManager == null )
+			if (Current.SceneManager == null)
 			{
 				Current.SceneManager = this;
 			}
-			if( Previous != null )
+			if (Previous != null)
 			{
 				Previous.PreUnload();
 			}
 
-			InputManager.ReleaseMouse();	// Prevents mouse presses from persisting through scenes.
+			InputManager.ReleaseMouse();    // Prevents mouse presses from persisting through scenes.
 			Current.PreLoad();
 
 			// Check if a transition from a previous scene change is still active while advancing to the next scene.
-			if( transition != null && transition.State == Transition.TransitionState.Outro )
+			if (transition != null && transition.State == Transition.TransitionState.Outro)
 			{
-				transition.SetDone();	// If active, kill the current transition so it doesn't blend through to the next scene.
+				transition.SetDone();   // If active, kill the current transition so it doesn't blend through to the next scene.
 			}
 		}
 
@@ -196,11 +195,11 @@ namespace DXFramework.SceneManagement
 		{
 			base.Initialize();
 
-			GraphicsDeviceManager = Content.ServiceProvider.GetService( typeof( IGraphicsDeviceManager ) ) as GraphicsDeviceManager;
+			GraphicsDeviceManager = Content.ServiceProvider.GetService(typeof(IGraphicsDeviceManager)) as GraphicsDeviceManager;
 			ViewportWidth = GraphicsDeviceManager.PreferredBackBufferWidth;
 			ViewportHeight = GraphicsDeviceManager.PreferredBackBufferHeight;
 
-			foreach( Scene scene in scenes.Values )
+			foreach (Scene scene in scenes.Values)
 			{
 				scene.Initialize();
 			}
@@ -219,36 +218,36 @@ namespace DXFramework.SceneManagement
 			base.UnloadContent();
 		}
 
-		public override void Update( GameTime gameTime )
+		public override void Update(GameTime gameTime)
 		{
-			if( Current != null )
+			if (Current != null)
 			{
-				Current.Update( gameTime );
+				Current.Update(gameTime);
 			}
 
-			if( transition != null )
+			if (transition != null)
 			{
-				transition.Update( gameTime );
+				transition.Update(gameTime);
 
-				if( transition.State == Transition.TransitionState.Done )
+				if (transition.State == Transition.TransitionState.Done)
 				{
 					transition = null;
 				}
 			}
-			base.Update( gameTime );
+			base.Update(gameTime);
 		}
 
-		public override void Draw( GameTime gameTime )
+		public override void Draw(GameTime gameTime)
 		{
-			base.Draw( gameTime );
-			if( Current != null )
+			base.Draw(gameTime);
+			if (Current != null)
 			{
-				Current.Draw( gameTime );
+				Current.Draw(gameTime);
 			}
 
-			if( transition != null )
+			if (transition != null)
 			{
-				transition.Draw( gameTime );
+				transition.Draw(gameTime);
 			}
 		}
 		#endregion

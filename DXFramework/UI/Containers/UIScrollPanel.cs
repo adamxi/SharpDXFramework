@@ -1,7 +1,7 @@
-﻿using System;
-using DXFramework.Util;
+﻿using DXFramework.Util;
 using SharpDX;
 using SharpDX.Toolkit;
+using System;
 
 namespace DXFramework.UI
 {
@@ -13,44 +13,52 @@ namespace DXFramework.UI
 
 		public UIScrollPanel()
 		{
-			this.AutoSize = false;
-			this.Restriction = ScrollRestriction.Unrestricted;
-			this.accel = new Accelerator2D();
-			this.ClipContent = true;
-			this.ClampContent = true;
-			this.InputDown += UIScrollPanel_MouseHeld;
-			this.InputPressed += UIScrollPanel_MousePressed;
-			this.InputReleasedAnywhere += UIScrollPanel_MouseReleasedAnywhere;
+			AutoSize = false;
+			Restriction = ScrollRestriction.Unrestricted;
+			accel = new Accelerator2D();
+			ClipContent = true;
+			ClampContent = true;
+			AbsorbPointer = false;
+			AllowInsideScrolling = true;
+			InputDown += UIScrollPanel_MouseHeld;
+			InputPressed += UIScrollPanel_MousePressed;
+			InputReleasedAnywhere += UIScrollPanel_MouseReleasedAnywhere;
 
 			contentPanel = new UIPanel();
 			contentPanel.AbsorbPointer = false;
 			contentPanel.AutoSize = true;
 			contentPanel.DrawBounds = false;
 
-			contentPanel.AddConstraint( Edge.TopLeft, this, Edge.TopLeft );
+			contentPanel.AddConstraint(Edge.TopLeft, this, Edge.TopLeft);
 
-			base.AddChild( contentPanel );
+			base.AddChild(contentPanel);
+		}
+
+		public override void DoLayout(ConstraintCategory category = ConstraintCategory.All)
+		{
+			var oldPos = contentPanel.Position;
+
+			base.DoLayout(category);
+			contentPanel.ResizeToContent(category);
+
+			contentPanel.Position = oldPos;
 		}
 
 		public bool ClampContent { get; set; }
 
-		public override Vector2 Location
+		public bool AllowInsideScrolling { get; set; }
+
+		public override Vector2 Position
 		{
-			get
-			{
-				return base.Location;
-			}
-			set
-			{
-				base.Location = value;
-			}
+			get { return base.Position; }
+			set { base.Position = value; }
 		}
 
-		void UIScrollPanel_MouseHeld( object sender, MouseEventArgs e )
+		void UIScrollPanel_MouseHeld(object sender, MouseEventArgs e)
 		{
-			if( e.Button == MouseButton.Left )
+			if (e.Button == MouseButton.Left)
 			{
-				accel.AddSample( InputManager.MouseDelta );
+				accel.AddSample(InputManager.MouseDelta);
 			}
 			else
 			{
@@ -58,9 +66,9 @@ namespace DXFramework.UI
 			}
 		}
 
-		void UIScrollPanel_MousePressed( object sender, MouseEventArgs e )
+		void UIScrollPanel_MousePressed(object sender, MouseEventArgs e)
 		{
-			if( e.Button == MouseButton.Left )
+			if (e.Button == MouseButton.Left)
 			{
 				accel.Begin();
 			}
@@ -70,9 +78,9 @@ namespace DXFramework.UI
 			}
 		}
 
-		void UIScrollPanel_MouseReleasedAnywhere( object sender, MouseEventArgs e )
+		void UIScrollPanel_MouseReleasedAnywhere(object sender, MouseEventArgs e)
 		{
-			if( e.Button == MouseButton.Left )
+			if (e.Button == MouseButton.Left)
 			{
 				accel.End();
 			}
@@ -80,8 +88,8 @@ namespace DXFramework.UI
 
 		public event EventHandler<EventArgs> ContentScrolled
 		{
-			add { onContentScrolled += value.MakeWeak( e => onContentScrolled -= e ); }
-			remove { onContentScrolled -= onContentScrolled.Unregister( value ); }
+			add { onContentScrolled += value.MakeWeak(e => onContentScrolled -= e); }
+			remove { onContentScrolled -= onContentScrolled.Unregister(value); }
 		}
 
 		public ScrollRestriction Restriction { get; set; }
@@ -91,20 +99,20 @@ namespace DXFramework.UI
 			get { return contentPanel; }
 		}
 
-		public override bool AddChild( UIControl control )
+		public override bool AddChild(UIControl control)
 		{
-			bool success = contentPanel.AddChild( control );
-			if( success && AutoSize )
+			bool success = contentPanel.AddChild(control);
+			if (success && AutoSize)
 			{
 				ResizeToContent();
 			}
 			return success;
 		}
 
-		public override bool RemoveChild( UIControl control )
+		public override bool RemoveChild(UIControl control)
 		{
-			bool added = contentPanel.RemoveChild( control );
-			if( added && AutoSize )
+			bool added = contentPanel.RemoveChild(control);
+			if (added && AutoSize)
 			{
 				ResizeToContent();
 			}
@@ -114,7 +122,7 @@ namespace DXFramework.UI
 		public override void ClearChildren()
 		{
 			contentPanel.ClearChildren();
-			if( AutoSize )
+			if (AutoSize)
 			{
 				ResizeToContent();
 			}
@@ -127,116 +135,123 @@ namespace DXFramework.UI
 
 		private void OnContentScrolled()
 		{
-			if( onContentScrolled != null )
+			if (onContentScrolled != null)
 			{
-				onContentScrolled.Invoke( this, null );
+				onContentScrolled.Invoke(this, null);
 			}
 		}
 
-		public void ScrollToLocation( Vector2 location )
+		public void ScrollToLocation(Vector2 location)
 		{
-			if( ClampContent )
+			if (ClampContent)
 			{
-				contentPanel.Location = new Vector2( GetClampedX( location.X ), GetClampedY( location.Y ) );
+				contentPanel.Position = new Vector2(GetClampedX(location.X), GetClampedY(location.Y));
 			}
 			else
 			{
-				contentPanel.Location = location;
+				contentPanel.Position = location;
 			}
 		}
 
-		private float GetClampedX( float x )
+		private float GetClampedX(float x)
 		{
-			if( contentPanel.size.X < size.X )
+			if (contentPanel.size.X < size.X)
 			{
-				return MathUtil.Clamp( x, 0, size.X - contentPanel.size.X );
+				return MathUtil.Clamp(x, 0, size.X - contentPanel.size.X);
 			}
 			else
 			{
-				return MathUtil.Clamp( x, size.X - contentPanel.size.X, 0 );
+				return MathUtil.Clamp(x, size.X - contentPanel.size.X, 0);
 			}
 		}
 
-		private float GetClampedY( float y )
+		private float GetClampedY(float y)
 		{
-			if( contentPanel.size.Y < size.Y )
+			if (contentPanel.size.Y < size.Y)
 			{
-				return MathUtil.Clamp( y, 0, size.Y - contentPanel.size.Y );
+				return MathUtil.Clamp(y, 0, size.Y - contentPanel.size.Y);
 			}
 			else
 			{
-				return MathUtil.Clamp( y, size.Y - contentPanel.size.Y, 0 );
+				return MathUtil.Clamp(y, size.Y - contentPanel.size.Y, 0);
 			}
 		}
 
-		private void SetContentX( float x )
+		private void SetContentX(float x)
 		{
-			if( contentPanel.X != x )
+			if (contentPanel.X != x && (AllowInsideScrolling || contentPanel.Width > Width))
 			{
 				contentPanel.X = x;
 				OnContentScrolled();
 			}
 		}
 
-		private void SetContentY( float y )
+		private void SetContentY(float y)
 		{
-			if( contentPanel.Y != y )
+			if (contentPanel.Y != y && (AllowInsideScrolling || contentPanel.Height > Height))
 			{
 				contentPanel.Y = y;
 				OnContentScrolled();
 			}
 		}
 
-		private void SetContentPos( Vector2 pos )
+		private void SetContentPos(Vector2 pos)
 		{
-			if( contentPanel.location != pos )
+			if (contentPanel.position != pos)
 			{
-				contentPanel.Location = pos;
+				if (!AllowInsideScrolling && contentPanel.Height < Height)
+				{
+					pos.Y = contentPanel.Position.Y;
+				}
+				if (!AllowInsideScrolling && contentPanel.Width < Width)
+				{
+					pos.X = contentPanel.Position.X;
+				}
+
+				contentPanel.Position = pos;
 				OnContentScrolled();
 			}
 		}
 
-		public override void Update( GameTime gameTime )
+		public override void Update(GameTime gameTime)
 		{
-			base.Update( gameTime );
+			base.Update(gameTime);
 			accel.Update();
 
-			switch( Restriction )
+			switch (Restriction)
 			{
 				case ScrollRestriction.Horizontal:
-					if( ClampContent )
+					float x = contentPanel.X + accel.Speed.X;
+
+					if (ClampContent)
 					{
-						SetContentX( GetClampedX( contentPanel.X + accel.Speed.X ) );
+						x = GetClampedX(x);
 					}
-					else
-					{
-						SetContentX( contentPanel.X + accel.Speed.X );
-					}
+
+					SetContentX(x);
 					break;
 
 				case ScrollRestriction.Vertical:
-					if( ClampContent )
+					float y = contentPanel.Y + accel.Speed.Y;
+
+					if (ClampContent)
 					{
-						SetContentY( GetClampedY( contentPanel.Y + accel.Speed.Y ) );
+						y = GetClampedY(y);
 					}
-					else
-					{
-						SetContentY( contentPanel.Y + accel.Speed.Y );
-					}
+
+					SetContentY(y);
 					break;
 
 				case ScrollRestriction.Unrestricted:
-					if( ClampContent )
+					Vector2 pos = contentPanel.Position + accel.Speed;
+
+					if (ClampContent)
 					{
-						Vector2 pos = Vector2.Zero;
-						pos.X = GetClampedX( contentPanel.X + accel.Speed.X );
-						pos.Y = GetClampedY( contentPanel.Y + accel.Speed.Y );
-						SetContentPos( pos );
+						pos.X = GetClampedX(pos.X);
+						pos.Y = GetClampedY(pos.Y);
 					}
-					else
-					{
-						SetContentPos( contentPanel.Location + accel.Speed );
-					}
+
+					SetContentPos(pos);
 					break;
 			}
 		}

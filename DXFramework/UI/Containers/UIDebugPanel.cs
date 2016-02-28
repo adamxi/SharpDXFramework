@@ -5,31 +5,62 @@ namespace DXFramework.UI
 	public class UIDebugPanel : UIPanel
 	{
 		private Dictionary<string, UILabel> valueLabels;
+		private UIControl previousAnchor;
+		private int nextYOffset;
 
 		public UIDebugPanel()
 		{
 			this.valueLabels = new Dictionary<string, UILabel>();
-			this.AutoSize = false;
+			this.AutoSize = true;
 			this.AddConstraint(Edge.TopRight, null, Edge.TopRight, 10);
 		}
 
-		public void SetDebugValue(string label, string value = null)
+		public void SetDebugValue(string labelText, object value = null)
 		{
 			UILabel valueLabel;
-			if (valueLabels.TryGetValue(label, out valueLabel))
+			if (valueLabels.TryGetValue(labelText, out valueLabel))
 			{
-				if (valueLabel.SetText(value))
+				if (valueLabel.SetText(value?.ToString()))
 				{
 					ResizeToContent();
 				}
 			}
 			else
 			{
-				AddDebugPair(label, value);
+				AddDebugPair(labelText, value?.ToString());
 			}
 		}
 
-		private UIControl previousAnchor;
+		public void AddLineBreak(int space = 10)
+		{
+			nextYOffset += -space;
+		}
+
+		public void SetStaticLabel(string labelText)
+		{
+			UILabel label = new UILabel(labelText);
+
+			label.AddConstraint(Edge.Left, this, Edge.Left, 5);
+
+			if (previousAnchor == null)
+			{
+				label.AddConstraint(Edge.Top, this, Edge.Top, 5 - nextYOffset);
+			}
+			else
+			{
+				label.AddConstraint(Edge.Top, previousAnchor, Edge.Bottom, nextYOffset);
+			}
+
+			nextYOffset = 0;
+			previousAnchor = label;
+
+			AddChild(label);
+
+			if (!SuspendLayout)
+			{
+				label.DoLayout();
+			}
+		}
 
 		private void AddDebugPair(string labelText, string labelValue = null)
 		{
@@ -39,17 +70,19 @@ namespace DXFramework.UI
 			label.AddConstraint(Edge.Left, this, Edge.Left, 5);
 			value.AddConstraint(Edge.Left, this, Edge.Left, 140);
 
+
 			if (previousAnchor == null)
 			{
-				label.AddConstraint(Edge.Top, this, Edge.Top, 5);
-				value.AddConstraint(Edge.Top, this, Edge.Top, 5);
+				label.AddConstraint(Edge.Top, this, Edge.Top, 5 - nextYOffset);
+				value.AddConstraint(Edge.Top, this, Edge.Top, 5 - nextYOffset);
 			}
 			else
 			{
-				label.AddConstraint(Edge.Top, previousAnchor, Edge.Bottom);
-				value.AddConstraint(Edge.Top, previousAnchor, Edge.Bottom);
+				label.AddConstraint(Edge.Top, previousAnchor, Edge.Bottom, nextYOffset);
+				value.AddConstraint(Edge.Top, previousAnchor, Edge.Bottom, nextYOffset);
 			}
 
+			nextYOffset = 0;
 			previousAnchor = label;
 
 			valueLabels.Add(labelText, value);
@@ -58,8 +91,6 @@ namespace DXFramework.UI
 
 			if (!SuspendLayout)
 			{
-				label.SuspendLayout = false;
-				value.SuspendLayout = false;
 				label.DoLayout();
 				value.DoLayout();
 			}

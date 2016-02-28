@@ -1,8 +1,8 @@
-using System;
-using System.Globalization;
 using SharpDX;
 using SharpDX.Toolkit;
 using SharpDX.Toolkit.Graphics;
+using System;
+using System.Globalization;
 
 namespace DXFramework.Util
 {
@@ -56,9 +56,9 @@ namespace DXFramework.Util
 
 		public override void Draw( GameTime gameTime )
 		{
-			frameCounter++;
+			++frameCounter;
 
-			spriteBatch.Begin();
+			spriteBatch.Begin(SpriteSortMode.Deferred, spriteBatch.GraphicsDevice.BlendStates.NonPremultiplied);
 			spriteBatch.DrawString( font, fpsString, position + Vector2.One, Color.Black );
 			spriteBatch.DrawString( font, fpsString, position, Color.White );
 			spriteBatch.End();

@@ -3,6 +3,7 @@ using DXPrimitiveFramework;
 using SharpDX.Collections;
 using SharpDX.Toolkit;
 using SharpDX.Toolkit.Graphics;
+using System.Linq;
 
 namespace DXFramework.UI
 {
@@ -29,13 +30,16 @@ namespace DXFramework.UI
 #if DEBUG
 			debugPanel = new UIDebugPanel();
 			//debugPanel.Size = new Vector2(460, 150);
-
+			//debugPanel.AddLineBreak();
 			debugPanel.SetDebugValue("Primitives");
+			debugPanel.AddLineBreak();
 			debugPanel.SetDebugValue("Game time");
+			debugPanel.SetDebugValue("  Update");
+			debugPanel.AddLineBreak();
 			debugPanel.SetDebugValue("UI time");
-			
-			debugPanel.SuspendLayout = false;
-			debugPanel.DoLayout();
+			debugPanel.SetDebugValue("  Draw");
+			debugPanel.SetDebugValue("  Layout");
+			//debugPanel.DoLayout();
 #endif
 		}
 
@@ -52,6 +56,36 @@ namespace DXFramework.UI
 			e.Item.CheckInitialize();
 		}
 
+		public void SetDebugValue(string key, object value)
+		{
+#if DEBUG
+			if (EnableProfilling)
+			{
+				debugPanel.SetDebugValue(key, value);
+			}
+#endif
+		}
+
+		public void SetStaticLabel(string labelText)
+		{
+#if DEBUG
+			if (EnableProfilling)
+			{
+				debugPanel.SetStaticLabel(labelText);
+			}
+#endif
+		}
+
+		public void AddLineBreak(int space = 10)
+		{
+#if DEBUG
+			if (EnableProfilling)
+			{
+				debugPanel.AddLineBreak(space);
+			}
+#endif
+		}
+
 		public void DoLayout()
 		{
 #if DEBUG
@@ -62,7 +96,6 @@ namespace DXFramework.UI
 #endif
 			foreach (UIControl control in this)
 			{
-				control.SuspendLayout = false;
 				control.DoLayout();
 			}
 			layoutDone = true;
@@ -96,6 +129,13 @@ namespace DXFramework.UI
 					control.Update(gameTime);
 				}
 			}
+
+			if (UIControl.Disposed.Count > 0)
+			{
+				UIControl.Disposed.ForEach(c => Remove(c));
+				UIControl.Disposed.Clear();
+			}
+
 #if DEBUG
 			if (EnableProfilling)
 			{
@@ -118,7 +158,9 @@ namespace DXFramework.UI
 				drawProfiler.Start();
 			}
 #endif
-			spriteBatch.Begin(spritemode: SpriteSortMode.Deferred);
+			spriteBatch.Begin(SpriteSortMode.Deferred, spriteBatch.GraphicsDevice.BlendStates.NonPremultiplied);
+			PrimitiveBatch.Begin();
+
 			foreach (UIControl control in this)
 			{
 				if (control.Enabled && control.Visible)
@@ -126,17 +168,25 @@ namespace DXFramework.UI
 					control.Draw(spriteBatch);
 				}
 			}
+
+			PrimitiveBatch.End();
 			spriteBatch.End();
 #if DEBUG
 			if (EnableProfilling)
 			{
+
 				drawProfiler.Stop();
 				debugPanel.SetDebugValue("UI time", (drawProfiler.TotalElapsed + updateProfiler.TotalElapsed + layoutProfiler.TotalElapsed).ToString("0.00"));
 				debugPanel.SetDebugValue("  Draw", drawProfiler.FullOutput(2, 4));
 				debugPanel.SetDebugValue("  Layout", layoutProfiler.FullOutput());
 				debugPanel.SetDebugValue("Primitives", PrimitiveBatch.DrawCount.ToString());
-				spriteBatch.Begin();
+
+				spriteBatch.Begin(SpriteSortMode.Deferred, spriteBatch.GraphicsDevice.BlendStates.NonPremultiplied);
+				PrimitiveBatch.Begin();
+
 				debugPanel.Draw(spriteBatch);
+
+				PrimitiveBatch.End();
 				spriteBatch.End();
 			}
 #endif

@@ -1,8 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using SharpDX;
+﻿using SharpDX;
 using SharpDX.Toolkit;
 using SharpDX.Toolkit.Graphics;
+using System;
+using System.Collections.Generic;
 
 namespace DXFramework.UI
 {
@@ -12,13 +12,12 @@ namespace DXFramework.UI
 
 		public UIContainer()
 		{
-			controls = new List<UIControl>();
+			controls = new List<UIControl>(4);
 		}
 
 		public List<UIControl> Controls
 		{
 			get { return controls; }
-			set { controls = value; }
 		}
 
 		public bool HasChildren
@@ -32,33 +31,43 @@ namespace DXFramework.UI
 			set
 			{
 				base.SuspendLayout = value;
-				if( controls != null )
+				foreach (UIControl control in controls)
 				{
-					foreach( UIControl control in controls )
-					{
-						control.SuspendLayout = value;
-					}
+					control.SuspendLayout = value;
+				}
+			}
+		}
+
+		public override Vector2 NormalizedOrigin
+		{
+			get { return base.NormalizedOrigin; }
+			set
+			{
+				base.NormalizedOrigin = value;
+				foreach (UIControl control in controls)
+				{
+					control.NormalizedOrigin = value;
 				}
 			}
 		}
 
 		#region Child control methods
-		public virtual bool AddChild( UIControl control )
+		public virtual bool AddChild(UIControl control)
 		{
-			if( control != null && !controls.Contains( control ) )
+			if (control != null && !controls.Contains(control))
 			{
-				control.AssignParent( this );
-				controls.Add( control );
+				control.AssignParent(this);
+				controls.Add(control);
 				return true;
 			}
 			return false;
 		}
 
-		public virtual bool RemoveChild( UIControl control )
+		public virtual bool RemoveChild(UIControl control)
 		{
-			if( control != null && controls.Remove( control ) )
+			if (control != null && controls.Remove(control))
 			{
-				control.AssignParent( null );
+				control.AssignParent(null);
 				return true;
 			}
 			return false;
@@ -66,128 +75,131 @@ namespace DXFramework.UI
 
 		public virtual void ClearChildren()
 		{
-			foreach( UIControl control in controls )
+			foreach (UIControl control in controls)
 			{
-				RemoveChild( control );
+				RemoveChild(control);
 			}
 		}
 
-		public virtual void ReorderChild( UIControl control, int zDepth )
+		public virtual void ReorderChild(UIControl control, int zDepth)
 		{
-			if( control != null && controls.Contains( control ) )
+			if (control != null && controls.Contains(control))
 			{
-				int removeIndex = controls.IndexOf( control );
-				controls.Insert( zDepth, control );
-				controls.RemoveAt( removeIndex );
+				int removeIndex = controls.IndexOf(control);
+				controls.Insert(zDepth, control);
+				controls.RemoveAt(removeIndex);
 			}
 		}
 
-		public virtual void MoveChildToFront( UIControl control )
+		public virtual void MoveChildToFront(UIControl control)
 		{
-			if( control != null && controls.Remove( control ) )
+			if (control != null && controls.Remove(control))
 			{
-				controls.Add( control );
+				controls.Add(control);
 			}
 		}
 
-		public virtual void MoveChildToBack( UIControl control )
+		public virtual void MoveChildToBack(UIControl control)
 		{
-			if( control != null && controls.Remove( control ) )
+			if (control != null && controls.Remove(control))
 			{
-				controls.Insert( 0, control );
+				controls.Insert(0, control);
 			}
 		}
 
-		public virtual void MoveChildBefore( UIControl control, UIControl relative )
+		public virtual void MoveChildBefore(UIControl control, UIControl relative)
 		{
-			if( control != null && relative != null && controls.Contains( control ) && controls.Contains( relative ) )
+			if (control != null && relative != null && controls.Contains(control) && controls.Contains(relative))
 			{
-				controls.Remove( control );
-				controls.Insert( controls.IndexOf( relative ), control );
+				controls.Remove(control);
+				controls.Insert(controls.IndexOf(relative), control);
 			}
 		}
 
-		public virtual void MoveChildAfter( UIControl control, UIControl relative )
+		public virtual void MoveChildAfter(UIControl control, UIControl relative)
 		{
-			if( control != null && relative != null && controls.Contains( control ) && controls.Contains( relative ) )
+			if (control != null && relative != null && controls.Contains(control) && controls.Contains(relative))
 			{
-				controls.Remove( control );
-				controls.Insert( controls.IndexOf( relative ) + 1, control );
+				controls.Remove(control);
+				controls.Insert(controls.IndexOf(relative) + 1, control);
 			}
 		}
 		#endregion
 
 		public RectangleF CalcContentBounds(bool includeMargins = false)
 		{
-			if( HasChildren && Visible )
+			if (HasChildren && Visible)
 			{
-				Vector2 topLeft = new Vector2( float.MaxValue );
-				Vector2 bottomRight = new Vector2( float.MinValue );
+				Vector2 topLeft = new Vector2(float.MaxValue);
+				Vector2 bottomRight = new Vector2(float.MinValue);
 
-				foreach( UIControl control in controls )
+				foreach (UIControl control in controls)
 				{
 					RectangleF rect = RectangleF.Empty;
 
-					if( control is UIContainer )
+					if (control is UIContainer)
 					{
-						rect = ( control as UIContainer ).CalcContentBounds();
-					}
-					else if( control.Visible )
-					{
-						rect = control.Bounds;
+						rect = (control as UIContainer).CalcContentBounds(includeMargins);
+						rect.Location = control.position;
 						if (includeMargins)
 						{
-							rect.Left -= Constrainer.GetEdgeDistance(Edge.Left);
-							rect.Right += Constrainer.GetEdgeDistance(Edge.Right);
-							rect.Top -= Constrainer.GetEdgeDistance(Edge.Top);
-							rect.Bottom += Constrainer.GetEdgeDistance(Edge.Bottom);
+							rect.Left -= control?.Constrainer?.GetEdgeDistance(Edge.Left) ?? 0;
+							rect.Right += control?.Constrainer?.GetEdgeDistance(Edge.Right) ?? 0;
+							rect.Top -= control?.Constrainer?.GetEdgeDistance(Edge.Top) ?? 0;
+							rect.Bottom += control?.Constrainer?.GetEdgeDistance(Edge.Bottom) ?? 0;
+						}
+					}
+					else if (control.Visible)
+					{
+						rect = control.SourceRect;
+						rect.Location = control.position;
+						if (includeMargins)
+						{
+							rect.Left -= control?.Constrainer?.GetEdgeDistance(Edge.Left) ?? 0;
+							rect.Right += control?.Constrainer?.GetEdgeDistance(Edge.Right) ?? 0;
+							rect.Top -= control?.Constrainer?.GetEdgeDistance(Edge.Top) ?? 0;
+							rect.Bottom += control?.Constrainer?.GetEdgeDistance(Edge.Bottom) ?? 0;
 						}
 					}
 
-					topLeft.X = Math.Min( topLeft.X, rect.Left );
-					topLeft.Y = Math.Min( topLeft.Y, rect.Top );
-					bottomRight.X = Math.Max( bottomRight.X, rect.Right );
-					bottomRight.Y = Math.Max( bottomRight.Y, rect.Bottom );
+					topLeft.X = Math.Min(topLeft.X, rect.Left);
+					topLeft.Y = Math.Min(topLeft.Y, rect.Top);
+					bottomRight.X = Math.Max(bottomRight.X, rect.Right);
+					bottomRight.Y = Math.Max(bottomRight.Y, rect.Bottom);
 				}
 
-				return new RectangleF( topLeft.X, topLeft.Y, bottomRight.X - topLeft.X, bottomRight.Y - topLeft.Y );
+				return new RectangleF(topLeft.X, topLeft.Y, bottomRight.X - topLeft.X, bottomRight.Y - topLeft.Y);
 			}
 			return RectangleF.Empty;
 		}
 
-		public override void DoLayout( ConstraintCategory category = ConstraintCategory.All )
+		public override void DoLayoutOnChildren(ConstraintCategory category = ConstraintCategory.All)
 		{
-			base.DoLayout( category );
-			foreach( UIControl control in controls )
-			{
-				if( control.Enabled && control.Visible )
-				{
-					control.DoLayout( category );
-				}
-			}
+			base.DoLayoutOnChildren(category);
+			controls.ForEach(c => c.DoLayout(category));
 		}
 
-		public override void Update( GameTime gameTime )
+		public override void Update(GameTime gameTime)
 		{
-			for( int i = controls.Count; --i >= 0; ) // Reverse loop. Start with top-most drawn control (last in collection), and work its way down.
+			for (int i = controls.Count; --i >= 0;) // Reverse loop. Start with top-most drawn control (last in collection), and work its way down.
 			{
-				UIControl control = controls[ i ];
-				if( control.Enabled && control.Visible )
+				UIControl control = controls[i];
+				if (control.Enabled && control.Visible)
 				{
-					control.Update( gameTime );
+					control.Update(gameTime);
 				}
 			}
-			base.Update( gameTime );
+			base.Update(gameTime);
 		}
 
-		public override void Draw( SpriteBatch spriteBatch )
+		public override void Draw(SpriteBatch spriteBatch)
 		{
-			base.Draw( spriteBatch );
-			foreach( UIControl control in controls )
+			base.Draw(spriteBatch);
+			foreach (UIControl control in controls)
 			{
-				if( control.Enabled && control.Visible )
+				if (control.Enabled && control.Visible)
 				{
-					control.Draw( spriteBatch );
+					control.Draw(spriteBatch);
 				}
 			}
 		}

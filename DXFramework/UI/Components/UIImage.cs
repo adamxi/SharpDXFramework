@@ -1,81 +1,76 @@
-﻿using System;
-using System.Runtime.Serialization;
-using DXPrimitiveFramework;
+﻿using DXPrimitiveFramework;
 using SharpDX;
 using SharpDX.Toolkit.Graphics;
+using System;
 
 namespace DXFramework.UI
 {
-	[DataContract]
 	public class UIImage : UIControl
 	{
 		private Texture2D texture;
 
-		public UIImage( string resource )
+		public UIImage(string resource)
 		{
 			DebugColor = Color.Red;
-			this.Resource = resource;
+			Resource = resource;
 		}
 
-		[DataMember]
 		public string Resource { get; set; }
 
-		protected override void Initialize()
+		public override void Initialize()
 		{
 			base.Initialize();
-			System.Diagnostics.Debug.Assert( texture == null, "Error: Texture already loaded." );
-			this.texture = Engine.Content.Load<Texture2D>( Resource );
-			this.Size = new Vector2( texture.Width, texture.Height );
+			if (!Resource.Equals(texture?.Name, StringComparison.InvariantCultureIgnoreCase))
+			{
+				texture = Engine.Content.Load<Texture2D>(Resource);
+				Size = new Vector2(texture.Width, texture.Height);
+			}
 		}
 
-		public override void Draw( SpriteBatch spriteBatch )
+		public override void Draw(SpriteBatch spriteBatch)
 		{
-			base.Draw( spriteBatch );
+			base.Draw(spriteBatch);
 
 			RectangleF clip;
 			RectangleF destRect = Bounds;
 			Rectangle? sourceRect = null;
 
-			if( HasClip( out clip ) )
+			if (HasClip(out clip))
 			{
 				RectangleF inter = RectangleF.Empty;
-				inter.Left = Math.Max( clip.Left, destRect.Left );
-				inter.Top = Math.Max( clip.Top, destRect.Top );
-				inter.Right = Math.Min( clip.Right, destRect.Right );
-				inter.Bottom = Math.Min( clip.Bottom, destRect.Bottom );
+				inter.Left = Math.Max(clip.Left, destRect.Left);
+				inter.Top = Math.Max(clip.Top, destRect.Top);
+				inter.Right = Math.Min(clip.Right, destRect.Right);
+				inter.Bottom = Math.Min(clip.Bottom, destRect.Bottom);
 
-				int leftClip = (int)( inter.Left - DrawPosition.X );
-				int rightClip = (int)( inter.Right - ( DrawPosition.X + Width ) );
-				int topClip = (int)( inter.Top - DrawPosition.Y );
-				int bottomClip = (int)( inter.Bottom - ( DrawPosition.Y + Height ) );
-				int clippedWidth = rightClip - leftClip;
-				int clippedHeight = bottomClip - topClip;
+				float leftClip = inter.Left - DrawPosition.X;
+				float rightClip = inter.Right - (DrawPosition.X + Width);
+				float topClip = inter.Top - DrawPosition.Y;
+				float bottomClip = inter.Bottom - (DrawPosition.Y + Height);
+				float clippedWidth = rightClip - leftClip;
+				float clippedHeight = bottomClip - topClip;
 
 				Rectangle source = Rectangle.Empty;
-				source.X = leftClip;
-				source.Y = topClip;
-				source.Width = (int)Width + clippedWidth;
-				source.Height = (int)Height + clippedHeight;
+				source.X = (int)leftClip;
+				source.Y = (int)topClip;
+				source.Width = (int)(Width + clippedWidth);
+				source.Height = (int)(Height + clippedHeight);
 				sourceRect = source;
 
 				destRect.X += leftClip;
 				destRect.Y += topClip;
-				destRect.Width = Math.Max( destRect.Width + clippedWidth, 0 );
-				destRect.Height = Math.Max( destRect.Height + clippedHeight, 0 );
+				destRect.Width = Math.Max(destRect.Width + clippedWidth, 0);
+				destRect.Height = Math.Max(destRect.Height + clippedHeight, 0);
 
-				if( UIManager.DrawDebug )
+				if (UIManager.DrawDebug)
 				{
-					PrimitiveBatch.Begin();
-					PRect rect = new PRect( clip, 1 );
+					PRect rect = new PRect(clip, 1);
 					rect.Color = Color.Yellow;
 					rect.Draw();
-					PrimitiveBatch.End();
 
-					PrimitiveBatch.Begin();
-					rect = new PRect( inter, 1 );
+					rect = new PRect(inter, 1);
 					rect.Color = Color.Magenta;
 					rect.Draw();
-					PrimitiveBatch.End();
 				}
 
 				//int rC = (int)(  inter.Right - ( DrawPosition.X + Width ) - location.X + location.X);
@@ -84,7 +79,7 @@ namespace DXFramework.UI
 				//int tC = (int)( location.Y + inter.Top - DrawPosition.Y - location.Y );
 			}
 
-			spriteBatch.Draw( texture, destRect, sourceRect, Color, 0f, Vector2.Zero, SpriteEffect, LayerDepth );
+			spriteBatch.Draw(texture, destRect, sourceRect, Color, 0f, Vector2.Zero, SpriteEffect, LayerDepth);
 		}
 
 		public override string ToString()

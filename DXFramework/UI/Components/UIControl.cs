@@ -1,17 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Runtime.Serialization;
-using DXPrimitiveFramework;
+﻿using DXPrimitiveFramework;
 using SharpDX;
 using SharpDX.Toolkit;
 using SharpDX.Toolkit.Graphics;
+using System;
+using System.Collections.Generic;
 
 namespace DXFramework.UI
 {
-	[DataContract]
 	public abstract class UIControl
 	{
-		internal Vector2 location;
+		public static List<UIControl> Disposed = new List<UIControl>();
+
+		internal Vector2 position;
 		protected Color color;
 		protected float layerDepth;
 		private UIControl parent;
@@ -24,7 +24,11 @@ namespace DXFramework.UI
 		protected bool initialized;
 		protected RectangleF sourceRect;
 		protected RectangleF boundingRect;
-		protected Matrix transform;
+		private Vector2 normalizedOrigin;
+		private Vector2 origin;
+		private Vector2 scaledOrigin;
+		private Vector2 scaledSize;
+		internal Vector2 drawPosition;
 
 		public UIControl()
 		{
@@ -35,36 +39,40 @@ namespace DXFramework.UI
 			Color = Color.White;
 			layerDepth = 1f;
 			DebugColor = Color.Black;
-			NormalizedOrigin = new Vector2(0.5f);
+			normalizedOrigin = new Vector2(0.5f);
 			suspendLayout = true;
 			initialized = false;
+			suspendLayout = true;
+			UpdateTransformation = true;
 		}
 
 		#region Properties
-		public Matrix Transform
+		private bool updateTransformation;
+
+		public bool UpdateTransformation
 		{
-			get { return transform; }
+			get { return updateTransformation; }
+			set
+			{
+				updateTransformation = value;
+				UpdateProperties = value;
+			}
 		}
 
-		public bool UpdateTransformation { get; set; }
+		public bool UpdateProperties { get; protected set; }
 
-		[DataMember]
 		public bool Enabled { get; set; }
 
-		[DataMember]
 		public bool Visible { get; set; }
 
 		public bool HasDecorations { get; private set; }
 
 		public bool HasParent { get; private set; }
 
-		[DataMember]
 		public bool DrawBounds { get; set; }
 
-		[DataMember]
 		public bool ClipContent { get; set; }
 
-		[DataMember]
 		public virtual bool SuspendLayout
 		{
 			get { return suspendLayout; }
@@ -82,10 +90,8 @@ namespace DXFramework.UI
 		/// If true, the control will absorb pointer inputs.
 		/// Will absorb inputs regardless of if the control has any subscribing pointer events.
 		/// </summary>
-		[DataMember]
-		public bool AbsorbPointer { get; set; }
+		public virtual bool AbsorbPointer { get; set; }
 
-		[DataMember]
 		public bool PointerPreview { get; set; }
 
 		/// <summary>
@@ -98,12 +104,13 @@ namespace DXFramework.UI
 			get { return parent; }
 		}
 
-		internal Vector2 drawPosition;
-
+		/// <summary>
+		/// Absolute screen position.
+		/// </summary>
 		public Vector2 DrawPosition
 		{
 			get { return drawPosition; }
-			set
+			internal set
 			{
 				if (drawPosition != value)
 				{
@@ -113,16 +120,20 @@ namespace DXFramework.UI
 			}
 		}
 
-		public virtual Vector2 Location
+		/// <summary>
+		/// Control position relative to its parent.
+		/// If parent is 'Null', the position is relative to the screen viewport.
+		/// </summary>
+		public virtual Vector2 Position
 		{
-			get { return location; }
+			get { return position; }
 			set
 			{
-				if (location != value)
+				if (position != value)
 				{
-					location = value;
+					position = value;
+					this.UpdateDrawPosition();
 					UpdateTransformation = true;
-					this.UpdateDrawLocation();
 				}
 			}
 		}
@@ -130,16 +141,21 @@ namespace DXFramework.UI
 		/// <summary>
 		/// Normalized origin [0..1].
 		/// </summary>
-		public virtual Vector2 NormalizedOrigin { get; set; }
-
-		public virtual Vector2 Origin
+		public virtual Vector2 NormalizedOrigin
 		{
-			get { return NormalizedOrigin * size; }
-		}
-
-		public virtual Vector2 ScaledOrigin
-		{
-			get { return NormalizedOrigin * ScaledSize; }
+			get { return normalizedOrigin; }
+			set
+			{
+				if (value != normalizedOrigin)
+				{
+					normalizedOrigin = value;
+					if (HasDecorations)
+					{
+						decorations.ForEach(d => d.NormalizedOrigin = value);
+					}
+					UpdateTransformation = true;
+				}
+			}
 		}
 
 		public virtual Vector2 Size
@@ -151,15 +167,27 @@ namespace DXFramework.UI
 				{
 					size = value;
 					UpdateTransformation = true;
-					sourceRect = new RectangleF(0, 0, value.X, value.Y);
-					DoLayout(ConstraintCategory.Update);
+					if (!SuspendLayout)
+					{
+						DoLayout(ConstraintCategory.Update);
+					}
 				}
 			}
 		}
 
-		public Vector2 ScaledSize
+		private Vector2 minSize;
+		public Vector2 MinimumSize
 		{
-			get { return scale * size; }
+			get { return minSize; }
+			set
+			{
+				minSize = value;
+				if (!SuspendLayout)
+				{
+					DoLayout(ConstraintCategory.Update);
+				}
+				UpdateTransformation = true;
+			}
 		}
 
 		public Vector2 Scale
@@ -171,8 +199,58 @@ namespace DXFramework.UI
 				{
 					scale = value;
 					UpdateTransformation = true;
-					DoLayout(ConstraintCategory.Update);
+					CalcProps();
+					if (!SuspendLayout)
+					{
+						DoLayout(ConstraintCategory.Update);
+					}
+
 				}
+			}
+		}
+
+		public virtual RectangleF Bounds
+		{
+			get
+			{
+				UpdateTransform();
+				return boundingRect;
+			}
+		}
+
+		public RectangleF SourceRect
+		{
+			get
+			{
+				CalcProps();
+				return sourceRect;
+			}
+		}
+
+		public Vector2 ScaledSize
+		{
+			get
+			{
+				CalcProps();
+				return size * scale;
+			}
+		}
+
+		public virtual Vector2 Origin
+		{
+			get
+			{
+				CalcProps();
+				return origin;
+			}
+		}
+
+		public Vector2 ScaledOrigin
+		{
+			get
+			{
+				CalcProps();
+				return scaledOrigin;
 			}
 		}
 
@@ -195,16 +273,33 @@ namespace DXFramework.UI
 			}
 		}
 
+		public void SetSize(float scale, bool resizeChildren = false)
+		{
+			if (resizeChildren && HasDecorations)
+			{
+				decorations.ForEach(d => d.Size *= scale);
+			}
+			Size *= scale;
+		}
+
 		public virtual float Width
 		{
 			get { return size.X; }
-			set { size.X = value; }
+			set
+			{
+				size.X = value;
+				UpdateTransformation = true;
+			}
 		}
 
 		public virtual float Height
 		{
 			get { return size.Y; }
-			set { size.Y = value; }
+			set
+			{
+				size.Y = value;
+				UpdateTransformation = true;
+			}
 		}
 
 		public float HalfWidth
@@ -231,38 +326,38 @@ namespace DXFramework.UI
 
 		public float Left
 		{
-			get { return location.X; }
+			get { return position.X; }
 			set
 			{
-				if (location.X != value)
+				if (position.X != value)
 				{
-					location.X = value;
-					this.UpdateDrawLocation();
+					position.X = value;
+					this.UpdateDrawPosition();
 				}
 			}
 		}
 
 		public float Top
 		{
-			get { return location.Y; }
+			get { return position.Y; }
 			set
 			{
-				if (location.Y != value)
+				if (position.Y != value)
 				{
-					location.Y = value;
-					this.UpdateDrawLocation();
+					position.Y = value;
+					this.UpdateDrawPosition();
 				}
 			}
 		}
 
 		public float Right
 		{
-			get { return location.X + Size.X; }
+			get { return position.X + Size.X; }
 		}
 
 		public float Bottom
 		{
-			get { return location.Y + Size.Y; }
+			get { return position.Y + Size.Y; }
 		}
 
 		public float CenterX
@@ -282,30 +377,19 @@ namespace DXFramework.UI
 
 		public Vector2 LocalCenter
 		{
-			get { return location + size * 0.5f; }
-		}
-
-		public virtual RectangleF Bounds
-		{
-			get
-			{
-				UpdateTransform();
-				return boundingRect;
-			}
+			get { return position + size * 0.5f; }
 		}
 
 		/// <summary>
 		/// Normalized Alpha [0..1]
 		/// </summary>
-		[DataMember]
-		public float Alpha
+		public virtual float Alpha
 		{
 			get { return color.A * (1f / 255f); }
 			set { color.A = (byte)(value * 255); }
 		}
 
-		[DataMember]
-		public Color Color
+		public virtual Color Color
 		{
 			get { return color; }
 			set
@@ -461,14 +545,15 @@ namespace DXFramework.UI
 						pointedControl.CheckEvent(pointedControl.onInputLeave, MouseButton.None);
 						pointedControl = null;
 					}
+					// TODO: Enable fall-through logic for onInputEnter
 
 					//Console.WriteLine("Entered: " + ToString());
 					CheckEvent(onInputEnter, MouseButton.None);
 					UIControl.pointedControl = this;
-					pointerHandled = true;
+					pointerHandled = AbsorbPointer;
 				}
 			}
-
+			//Console.WriteLine("Pointer AbsorbPointer: " + ToString() + " " + AbsorbPointer);
 			if (PointerDown)
 			{
 				if (InputManager.AnyMousePressed && CheckEvent(onInputPressed, InputManager.MousePressed))
@@ -478,20 +563,26 @@ namespace DXFramework.UI
 					heldControl = this;
 				}
 
-				if (InputManager.AnyMouseDown)
+				if (InputManager.AnyMouseHeld)
 				{
+					//Console.WriteLine(ToString() + ": AnyMouseHeld");
 					bool inputMoveInitiated = false;
 					if (InputManager.MouseMoved)
 					{
-						inputMoveInitiated = CheckEvent(onInputMoved, InputManager.MouseDown);
+						inputMoveInitiated = CheckEvent(onInputMoved, InputManager.MouseHeld);
 						//Console.WriteLine( ToString() + ": Moved " + mouseMoveInitiated );
+						if (inputMoveInitiated)
+						{
+							heldControl = this; // TODO: This has not been tested properly
+						}
 					}
-					if (CheckEvent(onInputHeld, InputManager.MouseDown))
+					if (CheckEvent(onInputHeld, InputManager.MouseHeld))
 					{
 						//Console.WriteLine("Pointer held: " + ToString());
 						pointerHandled = true;
 						heldControl = this;
 					}
+
 					pointerHandled = AbsorbPointer || inputMoveInitiated;
 				}
 
@@ -502,10 +593,12 @@ namespace DXFramework.UI
 					heldControl = null;
 				}
 
-				if (!InputManager.AnyMouseDown)
+				if (!InputManager.AnyMouseHeld)
 				{
 					//Console.WriteLine("Pointer Up: " + ToString());
 					PointerDown = false;
+					pointerHandled = false; // TODO: This has not been tested properly
+
 					if (CheckEvent(onInputReleasedAnywhere, InputManager.MouseReleased))
 					{
 						pointerHandled = true;
@@ -630,7 +723,7 @@ namespace DXFramework.UI
 		#endregion
 
 		#region Methods
-		internal void CheckInitialize()
+		internal virtual void CheckInitialize()
 		{
 			if (!initialized)
 			{
@@ -642,7 +735,7 @@ namespace DXFramework.UI
 		/// Override and initialize any control related variables here.
 		/// Called internally by the UI system prior to usage.
 		/// </summary>
-		protected virtual void Initialize()
+		public virtual void Initialize()
 		{
 			initialized = true;
 		}
@@ -656,12 +749,22 @@ namespace DXFramework.UI
 
 		public virtual void DoLayout(ConstraintCategory category = ConstraintCategory.All)
 		{
-			this.EnforceConstraints(category);
+			if (Enabled)
+			{
+				suspendLayout = false;
+				this.EnforceConstraints(category);
+				UpdateTransform();
+				DoLayoutOnChildren(category);
+				layoutDone = true;
+			}
+		}
+
+		public virtual void DoLayoutOnChildren(ConstraintCategory category = ConstraintCategory.All)
+		{
 			if (HasDecorations)
 			{
-				decorations.ForEach(d => d.DoLayout(category));
+				decorations.ForEach(c => c.DoLayout(category));
 			}
-			layoutDone = true;
 		}
 
 		public bool HasClip(out RectangleF clip)
@@ -708,26 +811,47 @@ namespace DXFramework.UI
 			return position - DrawPosition;
 		}
 
+		private void CalcProps()
+		{
+			if (UpdateProperties)
+			{
+				sourceRect = new RectangleF(0, 0, size.X, size.Y);
+				scaledSize = size * scale;
+				origin = normalizedOrigin * size;
+				scaledOrigin = normalizedOrigin * scaledSize;
+				UpdateProperties = false;
+			}
+		}
+
 		private void UpdateTransform()
 		{
 			if (UpdateTransformation)
 			{
-				sourceRect = new RectangleF(0, 0, size.X, size.Y); // Todo: SourceRect should be properly set from the size property.
-																   //boundingRect = new RectangleF( DrawPosition.X, DrawPosition.Y, size.X, size.Y );
+				//CheckInitialize();
+				CalcProps();
 
-				transform =
-					Matrix.Translation(new Vector3(-Origin, 0f)) *
-					Matrix.Scaling(new Vector3(Scale, 0f)) *
+				var transform =
+					Matrix.Translation(new Vector3(-origin, 0f)) *
+					Matrix.Scaling(new Vector3(scale, 0f)) *
 					//Matrix.RotationZ( Radians ) *
-					Matrix.Translation(new Vector3(DrawPosition + Origin, 0f));
+					Matrix.Translation(new Vector3(DrawPosition + origin, 0f));
 
-				CalculateBoundingRectangle(ref sourceRect, ref transform, out boundingRect);
+				CalculateBoundingRectangle(ref transform);
 				UpdateTransformation = false;
 			}
 		}
 
+		public virtual void CalculateBoundingRectangle(ref Matrix transform)
+		{
+			CalculateBoundingRectangle(ref sourceRect, ref transform, out boundingRect);
+		}
+
 		public virtual void Update(GameTime gameTime)
 		{
+			if (!Enabled)
+			{
+				return;
+			}
 			CheckPointerDown();
 			if (!InputManager.PointerHandled)
 			{
@@ -737,30 +861,49 @@ namespace DXFramework.UI
 
 		public virtual void Draw(SpriteBatch spriteBatch)
 		{
+			if (!Enabled || !Visible)
+			{
+				return;
+			}
 			UpdateTransform();
 			if (DrawBounds && Size != Vector2.Zero)
 			{
 				spriteBatch.Draw(Engine.Texture1x1, Bounds, null, Color, 0f, Vector2.Zero, SpriteEffect, LayerDepth);
+				//spriteBatch.Draw(Engine.Texture1x1, DrawPosition, sourceRect.ToRectangle(), Color, 0f, Origin, Scale, SpriteEffect, LayerDepth);
 			}
 
 			if (HasDecorations)
 			{
-				decorations.ForEach(d => d.Draw(spriteBatch));
+				foreach (var d in decorations)
+				{
+					if (d.Visible)
+					{
+						d.Draw(spriteBatch);
+					};
+				}
 			}
 
 			if (UIManager.DrawDebug)
 			{
-				PrimitiveBatch.Begin();
-				PRect rect = new PRect(Bounds, 3);
+				PRect rect = new PRect(Bounds, 1);
 				rect.Color = DebugColor;
 				rect.Draw();
-				PrimitiveBatch.End();
 			}
 		}
 
 		public override string ToString()
 		{
-			return (Tag != null ? Tag.ToString() + " | " : "") + $"{GetType().Name} | {Bounds.Size.ToString()}";
+			return (Tag != null ? $"Tag: {Tag.ToString()} | " : string.Empty) + $"Type: {GetType().Name} | Location: {position.X.ToString()}, {position.Y.ToString()} | Size: {size.X.ToString()}, {size.Y.ToString()} | Bounds: {Bounds.ToString()}";
+		}
+
+		public virtual void Dispose()
+		{
+			Enabled = false;
+			Visible = false;
+			if (!Disposed.Contains(this))
+			{
+				Disposed.Add(this);
+			}
 		}
 		#endregion
 
@@ -769,7 +912,7 @@ namespace DXFramework.UI
 		/// </summary>
 		/// <param name="rectangle">Original bounding rectangle.</param>
 		/// <param name="transform">World transform of the rectangle.</param>
-		/// <returns>A new rectangle which contains the trasnformed rectangle.</returns>
+		/// <returns>A new rectangle which contains the transformed rectangle.</returns>
 		public static void CalculateBoundingRectangle(ref RectangleF rectangle, ref Matrix transform, out RectangleF boundingRect)
 		{
 			// Get all four corners in local space

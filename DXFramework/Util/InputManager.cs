@@ -71,7 +71,7 @@ namespace DXFramework
 
 		public static MouseButton MousePressed { get; private set; }
 
-		public static MouseButton MouseDown { get; private set; }
+		public static MouseButton MouseHeld { get; private set; }
 
 		public static MouseButton MouseReleased { get; private set; }
 
@@ -80,9 +80,9 @@ namespace DXFramework
 			get { return MousePressed != MouseButton.None; }
 		}
 
-		public static bool AnyMouseDown
+		public static bool AnyMouseHeld
 		{
-			get { return MouseDown != MouseButton.None; }
+			get { return MouseHeld != MouseButton.None; }
 		}
 
 		public static bool AnyMouseReleased
@@ -150,7 +150,7 @@ namespace DXFramework
 			CheckDragClip();
 			UpdateMouseButtonStates();
 
-			if (forceMouseRelease && !AnyMouseDown)
+			if (forceMouseRelease && !AnyMouseHeld)
 			{
 				ResetMouse();
 				forceMouseRelease = false;
@@ -167,11 +167,11 @@ namespace DXFramework
 		{
 			if (ClipWhileDragging)
 			{
-				if (isClipping && !AnyMouseDown)
+				if (isClipping && !AnyMouseHeld)
 				{
 					ClearMouseClip();
 				}
-				else if (!isClipping && AnyMouseDown)
+				else if (!isClipping && AnyMouseHeld)
 				{
 					System.Windows.Forms.Control control = game.Window.NativeWindow as System.Windows.Forms.Control;
 					System.Drawing.Size diff = control.Size - control.ClientSize;
@@ -220,7 +220,7 @@ namespace DXFramework
 
 		private static void ResetMouse()
 		{
-			MouseDown = MouseButton.None;
+			MouseHeld = MouseButton.None;
 			MousePressed = MouseButton.None;
 			MouseReleased = MouseButton.None;
 		}
@@ -366,7 +366,7 @@ namespace DXFramework
 			{
 				if (Held(AllButtons[i]))
 				{
-					MouseDown = AllButtons[i];
+					MouseHeld = AllButtons[i];
 					//Console.WriteLine( "MouseDown: " + MouseDown );
 				}
 				if (Pressed(AllButtons[i]))

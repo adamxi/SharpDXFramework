@@ -1,9 +1,9 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <TkFont>
-	<FontName>Verdana</FontName>
+	<FontName>Calibri</FontName>
 	<Size>12</Size>
 	<Spacing>0</Spacing>
-	<LineSpacing>10</LineSpacing>
+	<LineSpacing>0</LineSpacing>
 	<UseKerning>false</UseKerning>
 	<Format>Auto</Format>
 	<CharacterRegions>
@@ -14,5 +14,5 @@
 	</CharacterRegions>
 	<DefaultCharacter>32</DefaultCharacter>
 	<Style>Regular</Style>
-	<NoPremultiply>false</NoPremultiply>
+	<NoPremultiply>true</NoPremultiply>
 </TkFont>

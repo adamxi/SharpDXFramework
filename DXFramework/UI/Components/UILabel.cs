@@ -1,21 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Runtime.Serialization;
-using SharpDX;
+﻿using SharpDX;
 using SharpDX.Toolkit.Graphics;
+using System;
+using System.Collections.Generic;
 
 namespace DXFramework.UI
 {
-	[DataContract]
 	public class UILabel : UIControl
 	{
+		private static string[] splitChar = new string[] { " " };
+
 		private SpriteFont font;
 		private float lineHeight;
-
-		[DataMember]
 		private string text;
 		private string[] lines;
-		[DataMember]
 		private bool multiLine;
 
 		public UILabel() : this(null, false) { }
@@ -25,17 +22,16 @@ namespace DXFramework.UI
 		public UILabel(string text, bool multiLine = false)
 		{
 			this.text = text;
-			this.AutoSize = true;
 			this.multiLine = multiLine;
-			Initialize();
-		}
-
-		protected override void Initialize()
-		{
-			base.Initialize();
+			AutoSize = true;
 			Color = Color.Green;
 			Font = Engine.DefaultFont;
+			SetText(text);
+		}
 
+		public override void Initialize()
+		{
+			base.Initialize();
 			SetText(text);
 		}
 
@@ -54,12 +50,13 @@ namespace DXFramework.UI
 			set
 			{
 				font = value;
-				lineHeight = font.MeasureString(" ").Y * 0.5f + 2;
+				lineHeight = font.MeasureString(" ").Y + LineSpacing;
 			}
 		}
 
-		[DataMember]
 		public bool AutoSize { get; set; }
+
+		public int LineSpacing { get; set; }
 
 		public bool MultiLine
 		{
@@ -105,6 +102,7 @@ namespace DXFramework.UI
 		{
 			this.text = text;
 
+			var oldSize = size;
 			if (text == null)
 			{
 				if (AutoSize)
@@ -120,13 +118,11 @@ namespace DXFramework.UI
 				}
 				else if (AutoSize)
 				{
-					Vector2 strSize = font.MeasureString(text);
-					strSize.Y -= 10; // Remove LineSpacing. Check the font xml to get this magic number.
-					base.Size = strSize;
+					base.Size = font.MeasureString(text);
 				}
 			}
 
-			return UpdateTransformation; // UpdateTransformation becomes true for one frame if the size has changed.
+			return oldSize != size;
 		}
 
 		private void SplitText(float width)
@@ -136,6 +132,87 @@ namespace DXFramework.UI
 				lines = SplitIntoLines(width);
 				base.Size = new Vector2(width, lineHeight * lines.Length);
 			}
+		}
+
+		private string WarpText(int width, int margin)
+		{
+			string text = this.text;
+			int len = text.Length;
+
+			width = width - (margin * 2);
+			for (int i = len + 1; --i >= 0;)
+			{
+				text = text.Substring(0, i);
+				Vector2 dim = font.MeasureString(text);
+
+				if (dim.X < width)
+				{
+					break;
+				}
+			}
+
+			return text;
+		}
+
+		private string[] SplitIntoLines(float maxWidth, int margin = 0)
+		{
+			if (text == null || text.Length == 0)
+			{
+				size = Vector2.Zero;
+				return new string[0];
+			}
+
+			string[] words = text.Split(splitChar, StringSplitOptions.RemoveEmptyEntries);
+			List<string> lines = new List<string>();
+			float lineWidth = 0;
+			string line = string.Empty;
+			margin *= 2;
+
+			foreach (string word in words)
+			{
+				var subWord = word;
+				int index = subWord.IndexOf("\r\n");            // Check word for "return to carriage + newline".
+				while (index > -1)
+				{
+					var w = subWord.Substring(0, index);		// Get the first subword up until the linebreak.
+					subWord = subWord.Substring(index + 2);		// Remove the linebreak from the subword.
+
+					if (w.Length > 0)
+					{
+						AddWordToLine(w, ref line, ref lineWidth, margin, maxWidth, lines);
+					}
+
+					AddNewLine(lines, ref lineWidth, ref line);
+					index = subWord.IndexOf("\r\n");
+				}
+
+				AddWordToLine(subWord, ref line, ref lineWidth, margin, maxWidth, lines);
+			}
+			if (line != string.Empty)
+			{
+				lines.Add(line);
+			}
+			return lines.ToArray();
+		}
+
+		private void AddWordToLine(string word, ref string line, ref float lineWidth, int margin, float maxWidth, List<string> lines)
+		{
+			float wordWidth = font.MeasureString(word + " ").X;
+
+			if (lineWidth + wordWidth + margin > maxWidth)
+			{
+				AddNewLine(lines, ref lineWidth, ref line);
+			}
+
+			line = string.Concat(line, word + " ");
+			lineWidth += wordWidth;
+		}
+
+		private void AddNewLine(List<string> lines, ref float lineWidth, ref string line)
+		{
+			lines.Add(line);
+			lineWidth = 0;
+			line = string.Empty;
 		}
 
 		public override void Draw(SpriteBatch spriteBatch)
@@ -197,61 +274,6 @@ namespace DXFramework.UI
 			{
 				spriteBatch.DrawString(font, text, DrawPosition + Origin, Color, 0f, Origin, Scale, SpriteEffects.None, LayerDepth);
 			}
-		}
-
-		private string WarpText(int width, int margin)
-		{
-			string text = this.text;
-			int len = text.Length;
-
-			width = width - (margin * 2);
-			for (int i = len + 1; --i >= 0;)
-			{
-				text = text.Substring(0, i);
-				Vector2 dim = font.MeasureString(text);
-
-				if (dim.X < width)
-				{
-					break;
-				}
-			}
-
-			return text;
-		}
-
-		private string[] SplitIntoLines(float maxWidth, int margin = 0)
-		{
-			if (text == null || text.Length == 0)
-			{
-				size = Vector2.Zero;
-				return new string[0];
-			}
-
-			string[] words = text.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-			List<string> lines = new List<string>();
-			float lineWidth = 0;
-			string line = string.Empty;
-			margin *= 2;
-
-			foreach (string word in words)
-			{
-				float wordWidth = font.MeasureString(word + " ").X;
-
-				if (lineWidth + wordWidth + margin > maxWidth)
-				{
-					lines.Add(line);
-					lineWidth = 0;
-					line = string.Empty;
-				}
-
-				line = string.Concat(line, word + " ");
-				lineWidth += wordWidth;
-			}
-			if (line != string.Empty)
-			{
-				lines.Add(line);
-			}
-			return lines.ToArray();
 		}
 
 		public override string ToString()

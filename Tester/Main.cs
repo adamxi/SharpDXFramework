@@ -35,7 +35,7 @@ namespace XManager
 
 		protected override void Initialize()
 		{
-			Window.Title = "Tester";
+			Window.Title = "SharpDX Framework Tester";
 			IsMouseVisible = true;
 
 			Engine.Initialize(this);
@@ -55,13 +55,14 @@ namespace XManager
 		{
 			base.LoadContent();
 			//sceneManager.Set<Intro>();
-			//sceneManager.Set<UITestScene>();
-			sceneManager.Set(new UITestScene());
+			//sceneManager.Set<MainTestScene>();
+			//sceneManager.Set(new MainSceen());
+			sceneManager.Set<UITestSceneMain>();
 		}
 
 		protected override void UnloadContent()
 		{
-			InputManager.ClearMouseClip(); // Precation to avoid mouse being clipped after application is closed.
+			InputManager.ClearMouseClip(); // Precaution to avoid mouse being clipped after application is closed.
 			base.UnloadContent();
 		}
 

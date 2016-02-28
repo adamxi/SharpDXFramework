@@ -461,7 +461,6 @@ namespace DXPrimitiveFramework
 
 		/// <summary>
 		/// Draws the primitive.
-		/// Same as calling PrimitiveBatch.Draw().
 		/// </summary>
 		public virtual void Draw()
 		{

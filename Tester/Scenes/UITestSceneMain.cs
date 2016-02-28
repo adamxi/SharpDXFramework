@@ -3,16 +3,19 @@ using DXFramework.SceneManagement;
 using DXFramework.UI;
 using DXFramework.Util;
 using SharpDX;
+using SharpDX.IO;
 using SharpDX.Toolkit;
 using SharpDX.Toolkit.Graphics;
 using SharpDX.Toolkit.Input;
+using System;
+using System.IO;
 
 namespace XManager.Scenes
 {
 	/// <summary>
 	/// Right after the PreMenu scene the menu is displayed.
 	/// </summary>
-	public class UITestScene : Scene
+	public class UITestSceneMain : TestScene
 	{
 		private Camera cam;
 		private UIManager uiManager;
@@ -20,75 +23,40 @@ namespace XManager.Scenes
 
 		public override void LoadContent()
 		{
+			UIManager.DrawDebug = true;
+			base.LoadContent();
 			cam = new Camera(GraphicsDevice);
 			uiManager = new UIManager();
 			uiManager.EnableProfilling = true;
 
 			InitTextWindow();
 			InitMenuPanel();
-			InitScrollWindow();
-			InitButton();
-
-#if DEBUG
-			UIManager.DrawDebug = true;
-#else
-			UIManager.DrawDebug = false;
-#endif
-		}
-
-		private void InitButton()
-		{
-			UIButton btn = new UIButton();
-			btn.AddDecoration(new UIImage("graphics/arrow_down"));
-			btn.Tag = "Arrow";
-			btn.AddConstraint(Edge.Right, null, Edge.Right, 100f, ConstraintCategory.Initialization);
-			btn.AddConstraint(Edge.CenterY, null, Edge.CenterY, ConstraintCategory.Initialization);
-			btn.InputMoved += btn_MouseMoved;
-
-			uiManager.Add(btn);
+			InitWindow();
 		}
 
 		private void InitTextWindow()
 		{
 			UIScrollWindow textWindow = new UIScrollWindow();
-			textWindow.Location = new Vector2(300, 300);
+			textWindow.Position = new Vector2(300, 300);
 			textWindow.ScrollPanel.Restriction = ScrollRestriction.Vertical;
-			textWindow.Size = new Vector2(180);
-			textWindow.AddConstraint(Edge.Horizontal | Edge.Bottom, null, Edge.Horizontal | Edge.Bottom, 5, ConstraintCategory.Initialization);
+			textWindow.Size = new Vector2(0, 180);
+			textWindow.AddConstraint(Edge.Bottom, null, Edge.Bottom, 5);
+			textWindow.AddConstraint(Edge.Horizontal, null, Edge.Horizontal, 5);
 
-			string str = "A multiline UILabel in a UIScrollPanel. ";
-			for (int i = 0; i < 6; i++)
-			{
-				str += str;
-			}
-
-			UILabel label = new UILabel(str, true);
+			string text = NativeFile.ReadAllText(Path.Combine(Environment.CurrentDirectory, "Lorem Ipsum.txt"));
+			UILabel label = new UILabel(text, true);
 			label.AddConstraint(Edge.TopLeft, textWindow.ScrollPanel, Edge.TopLeft, ConstraintCategory.Initialization);
 			label.AddConstraint(Edge.Right, textWindow.ScrollPanel, Edge.Right, ConstraintCategory.Initialization);
-
 			textWindow.AddChild(label);
 
 			uiManager.Add(textWindow);
-		}
-
-		private void InitScrollWindow()
-		{
-			UIScrollWindow sw = new UIScrollWindow();
-			sw.Location = new Vector2(100, 200);
-			sw.Size = new Vector2(100);
-
-			UIImage img = new UIImage("graphics/arrow_down");
-			img.AddConstraint(Edge.CenterXY, sw, Edge.TopLeft, ConstraintCategory.Initialization);
-			sw.AddChild(img);
-
-			uiManager.Add(sw);
 		}
 
 		private void InitMenuPanel()
 		{
 			menuPanel = new UITweenPanel();
 			menuPanel.AddConstraint(Edge.CenterXY, null, Edge.CenterXY);
-			menuPanel.Alpha = 0f;
+			menuPanel.Alpha = 0.5f;
 			menuPanel.AddChild(GetMenuEntry("New Game"));
 			menuPanel.AddChild(GetMenuEntry("Continue"));
 			menuPanel.AddChild(GetMenuEntry("Options"));
@@ -98,33 +66,40 @@ namespace XManager.Scenes
 			uiManager.Add(menuPanel);
 		}
 
+		private void InitWindow()
+		{
+			var window = new UIWindow();
+			window.AddConstraint(Edge.CenterY, null, Edge.CenterY, 0f, ConstraintCategory.Initialization);
+			window.AddConstraint(Edge.Right, null, Edge.Right, 50f, ConstraintCategory.Initialization);
+
+			var contentPanel = new UIScrollWindow(UIScrollWindow.ScrollBarMode.Both);
+			contentPanel.AddConstraint(Edge.Dock, window.BodyPanel, Edge.Dock);
+
+			var img = new UIImage("graphics/map");
+			img.AddConstraint(Edge.TopLeft, contentPanel.ScrollPanel, Edge.TopLeft, ConstraintCategory.Initialization);
+			contentPanel.AddChild(img);
+
+			window.BodyPanel.AddChild(contentPanel);
+			uiManager.Add(window);
+		}
+
 		private UIControl previousEntry;
 		private UIControl GetMenuEntry(string label)
 		{
 			var btn = new UIButton();
 			btn.Tag = label;
 			btn.AddDecoration(new UILabel(label));
+			//btn.NormalizedOrigin = Vector2.Zero;
 
-			if (previousEntry == null)
+			btn.AddConstraint(Edge.CenterX, menuPanel, Edge.CenterX, ConstraintCategory.All);
+
+			if (previousEntry != null)
 			{
-				btn.AddConstraint(Edge.CenterXY, menuPanel, Edge.CenterXY, ConstraintCategory.Initialization);
-			}
-			else
-			{
-				btn.AddConstraint(Edge.CenterX, previousEntry, Edge.CenterX, ConstraintCategory.Initialization);
-				btn.AddConstraint(Edge.Top, previousEntry, Edge.Bottom, -20, ConstraintCategory.Initialization);
+				btn.AddConstraint(Edge.Top, previousEntry, Edge.Bottom, -20, ConstraintCategory.All);
 			}
 
 			previousEntry = btn;
 			return btn;
-		}
-
-		void btn_MouseMoved(object sender, MouseEventArgs e)
-		{
-			if (e.Button == MouseButton.Right)
-			{
-				(sender as UIControl).Location += InputManager.MouseDelta;
-			}
 		}
 
 		void menuPanel_MouseMoved(object sender, MouseEventArgs e)
@@ -132,7 +107,7 @@ namespace XManager.Scenes
 			if (e.Button == MouseButton.Right)
 			{
 				System.Console.WriteLine(InputManager.MouseDelta);
-				(sender as UIControl).Location += InputManager.MouseDelta;
+				(sender as UIControl).Position += InputManager.MouseDelta;
 			}
 			else
 			{
@@ -142,12 +117,15 @@ namespace XManager.Scenes
 
 		public override void Update(GameTime gameTime)
 		{
+			base.Update(gameTime);
 			//if( InputManager.AnyMouse )
 			//{
 			//	SceneManager.Set( typeof( Loading ).Name );
 			//}
 
 			uiManager.Update(gameTime);
+			uiManager.AddLineBreak();
+			uiManager.SetDebugValue("Pointer handled", InputManager.PointerHandled);
 
 			if (InputManager.Pressed(Keys.Left))
 			{
@@ -187,7 +165,8 @@ namespace XManager.Scenes
 
 		public override void Draw(GameTime gameTime)
 		{
-			GraphicsDevice.Clear(Color.Brown);
+			base.Draw(gameTime);
+			//GraphicsDevice.Clear(Color.Brown);
 			uiManager.Draw(spriteBatch);
 		}
 	}

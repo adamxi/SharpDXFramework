@@ -24,7 +24,7 @@ namespace XManager.Scenes
 			{
 				if( InputManager.AnyMousePressed )
 				{
-					SceneManager.Set<UITestScene>();
+					SceneManager.Set<UITestSceneMain>();
 				}
 			}
 		}

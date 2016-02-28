@@ -24,7 +24,7 @@ namespace DXFramework.UI
 
 			Vector2 size = ViewportSize;
 			Rectangle rect = new Rectangle(0, 0, (int)size.X, (int)size.Y);
-			if (rect.Intersects(location))
+			if (rect.Intersects(position))
 			{
 				State = TweenState.Shown;
 			}
@@ -226,17 +226,17 @@ namespace DXFramework.UI
 			}
 			if (targetPosition.X == -1)
 			{
-				targetPosition.X = Location.X;
+				targetPosition.X = Position.X;
 			}
 			if (targetPosition.Y == -1)
 			{
-				targetPosition.Y = Location.Y;
+				targetPosition.Y = Position.Y;
 			}
 
 			State = TweenState.Leaving;
 			Enabled = true;
 			Visible = true;
-			Vector2 to = location;
+			Vector2 to = position;
 			Vector2 view = ViewportSize;
 
 			switch (edge)
@@ -255,7 +255,7 @@ namespace DXFramework.UI
 					break;
 			}
 
-			interpolator = new Tweener(location, to, duration, easeFunction);
+			interpolator = new Tweener(position, to, duration, easeFunction);
 			return true;
 		}
 
@@ -267,7 +267,7 @@ namespace DXFramework.UI
 			{
 				case TweenState.Entering:
 					interpolator.Update(gameTime);
-					Location = interpolator.Value;
+					Position = interpolator.Value;
 
 					if (interpolator.Done)
 					{
@@ -277,7 +277,7 @@ namespace DXFramework.UI
 
 				case TweenState.Leaving:
 					interpolator.Update(gameTime);
-					Location = interpolator.Value;
+					Position = interpolator.Value;
 
 					if (interpolator.Done)
 					{

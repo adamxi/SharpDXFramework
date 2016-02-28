@@ -71,11 +71,27 @@ namespace SharpDX
 			v.Y = Math.Abs(v.Y);
 		}
 
-		public static Vector2 GetAbs(this Vector2 v)
+		public static Vector2 AbsToVector(this Vector2 v)
 		{
 			Vector2 vec;
 			vec.X = Math.Abs(v.X);
 			vec.Y = Math.Abs(v.Y);
+			return vec;
+		}
+
+		public static Vector2 Min(this Vector2 v, Vector2 value)
+		{
+			Vector2 vec;
+			vec.X = Math.Min(v.X, value.X);
+			vec.Y = Math.Min(v.Y, value.Y);
+			return vec;
+		}
+
+		public static Vector2 Max(this Vector2 v, Vector2 value)
+		{
+			Vector2 vec;
+			vec.X = Math.Max(v.X, value.X);
+			vec.Y = Math.Max(v.Y, value.Y);
 			return vec;
 		}
 

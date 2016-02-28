@@ -3,7 +3,7 @@
 namespace SharpDX
 {
 	/// <summary>
-	/// Legacy helper class implementing old XNA Vector2 funtionality
+	/// Legacy helper class implementing old XNA Vector2 functionality
 	/// </summary>
 	[Obsolete( "Use SharpDX framework instead" )]
 	public static class Vector2Helper

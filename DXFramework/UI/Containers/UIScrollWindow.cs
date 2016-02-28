@@ -1,5 +1,5 @@
-﻿using System;
-using SharpDX;
+﻿using SharpDX;
+using System;
 
 namespace DXFramework.UI
 {
@@ -8,44 +8,134 @@ namespace DXFramework.UI
 	/// </summary>
 	public class UIScrollWindow : UIPanel
 	{
-		public UIScrollWindow()
-		{
-			this.AutoSize = false;
+		private ScrollBarMode mode;
 
-			ScrollBar = new UIScrollBarWithArrows();
-			ScrollBar.DrawBounds = false;
-			ScrollBar.ValueChanged += scrollBar_ValueChanged;
-			
+		public UIScrollWindow(ScrollBarMode mode = ScrollBarMode.Vertical)
+		{
+			this.mode = mode;
+			AutoSize = false;
+			DebugColor = Color.White;
+
 			ScrollPanel = new UIScrollPanel();
-			ScrollPanel.AutoSize = false;
+			ScrollPanel.AutoSize = true;
 			ScrollPanel.DrawBounds = false;
 			ScrollPanel.AbsorbPointer = false;
+			ScrollPanel.AllowInsideScrolling = false;
 			ScrollPanel.ContentScrolled += scrollPanel_ContentScrolled;
 
-			ScrollBar.AddConstraint(Edge.Vertical | Edge.Right, this, Edge.Vertical | Edge.Right);
-			ScrollPanel.AddConstraint(Edge.Vertical | Edge.Left, this, Edge.Vertical | Edge.Left);
-			ScrollPanel.AddConstraint(Edge.Right, ScrollBar, Edge.Left);
+			if (mode.ContainsFlag(ScrollBarMode.Vertical))
+			{
+				VerticalScrollBar = new UIScrollBar(UIScrollBar.ScrollBarOrientation.Vertical);
+				VerticalScrollBar.ValueChanged += scrollBar_ValueChanged;
+				VerticalScrollBar.Width = 16f;
+				VerticalScrollBar.AddConstraint(Edge.TopRight, this, Edge.TopRight);
+				VerticalScrollBar.AddConstraint(Edge.Bottom, this, Edge.Bottom, mode.ContainsFlag(ScrollBarMode.Horizontal) ? VerticalScrollBar.Width : 0);
+				ScrollPanel.AddConstraint(Edge.Left, this, Edge.Left, 1);
+				ScrollPanel.AddConstraint(Edge.Right, VerticalScrollBar, Edge.Left, -1);
+				base.AddChild(VerticalScrollBar);
+			}
+			else
+			{
+				ScrollPanel.AddConstraint(Edge.Left, this, Edge.Left, 1);
+				ScrollPanel.AddConstraint(Edge.Right, this, Edge.Right, -1);
+			}
 
-			base.AddChild(ScrollBar);
+			if (mode.ContainsFlag(ScrollBarMode.Horizontal))
+			{
+				HorizontalScrollBar = new UIScrollBar(UIScrollBar.ScrollBarOrientation.Horizontal);
+				HorizontalScrollBar.ValueChanged += scrollBar_ValueChanged;
+				HorizontalScrollBar.Height = 16f;
+				HorizontalScrollBar.AddConstraint(Edge.BottomLeft, this, Edge.BottomLeft);
+				HorizontalScrollBar.AddConstraint(Edge.Right, this, Edge.Right, mode.ContainsFlag(ScrollBarMode.Vertical) ? HorizontalScrollBar.Height : 0);
+				ScrollPanel.AddConstraint(Edge.Top, this, Edge.Top, 1);
+				ScrollPanel.AddConstraint(Edge.Bottom, HorizontalScrollBar, Edge.Top, -1);
+				base.AddChild(HorizontalScrollBar);
+			}
+			else
+			{
+				ScrollPanel.AddConstraint(Edge.Top, this, Edge.Top, 1);
+				ScrollPanel.AddConstraint(Edge.Bottom, this, Edge.Bottom, -1);
+			}
+
+			if (mode == ScrollBarMode.Both)
+			{
+				var fillerPanel = new UIPanel();
+				fillerPanel.Color = VerticalScrollBar.Color;
+				fillerPanel.AutoSize = false;
+				fillerPanel.Size = new Vector2(VerticalScrollBar.Width, HorizontalScrollBar.Height);
+				fillerPanel.Alpha = 1f;
+				fillerPanel.AddConstraint(Edge.BottomRight, this, Edge.BottomRight);
+				base.AddChild(fillerPanel);
+			}
+
 			base.AddChild(ScrollPanel);
 		}
 
-		public UIScrollPanel ScrollPanel { get; set; }
+		public UIScrollPanel ScrollPanel { get; private set; }
 
-		public UIScrollBarWithArrows ScrollBar { get; set; }
+		public UIScrollBar VerticalScrollBar { get; private set; }
+
+		public UIScrollBar HorizontalScrollBar { get; private set; }
 
 		void scrollPanel_ContentScrolled(object sender, EventArgs e)
 		{
-			float yDiff = ScrollPanel.ContentPanel.Height - ScrollPanel.Height;
-			ScrollBar.SetValue(ScrollPanel.ContentPanel.location.Y / -yDiff, true);
+			UpdateScrollBarPosition();
 		}
 
 		void scrollBar_ValueChanged(object sender, EventArgs e)
 		{
 			ScrollPanel.StopMovement();
 
-			float yDiff = ScrollPanel.ContentPanel.Height - ScrollPanel.Height;
-			ScrollPanel.ScrollToLocation(new Vector2(ScrollPanel.ContentPanel.X, -yDiff * ScrollBar.Value));
+			Vector2 pos = ScrollPanel.ContentPanel.Position;
+
+			if (mode.ContainsFlag(ScrollBarMode.Vertical))
+			{
+				float yDiff = ScrollPanel.ContentPanel.Height - ScrollPanel.Height;
+				pos.Y = -yDiff * VerticalScrollBar.Value;
+			}
+			if (mode.ContainsFlag(ScrollBarMode.Horizontal))
+			{
+				float xDiff = ScrollPanel.ContentPanel.Width - ScrollPanel.Width;
+				pos.X = -xDiff * HorizontalScrollBar.Value;
+			}
+
+			ScrollPanel.ScrollToLocation(pos);
+		}
+
+		private void UpdateScrollBarPosition()
+		{
+			if (mode.ContainsFlag(ScrollBarMode.Vertical))
+			{
+				float yDiff = ScrollPanel.ContentPanel.Height - ScrollPanel.Height;
+				VerticalScrollBar.SetValue(ScrollPanel.ContentPanel.position.Y / -yDiff, true);
+			}
+			if (mode.ContainsFlag(ScrollBarMode.Horizontal))
+			{
+				float xDiff = ScrollPanel.ContentPanel.Width - ScrollPanel.Width;
+				HorizontalScrollBar.SetValue(ScrollPanel.ContentPanel.position.X / -xDiff, true);
+			}
+		}
+
+		public void CheckScrollBarsVisible(ConstraintCategory category = ConstraintCategory.All)
+		{
+			if (mode.ContainsFlag(ScrollBarMode.Vertical))
+			{
+				var v = ScrollPanel.ContentPanel.size.Y > size.Y;
+				if (v != VerticalScrollBar.Visible)
+				{
+					VerticalScrollBar.Visible = v;
+					VerticalScrollBar.DoLayout(category);
+				}
+			}
+			if (mode.ContainsFlag(ScrollBarMode.Horizontal))
+			{
+				var v = ScrollPanel.ContentPanel.size.X > size.X;
+				if (v != HorizontalScrollBar.Visible)
+				{
+					HorizontalScrollBar.Visible = v;
+					HorizontalScrollBar.DoLayout(category);
+				}
+			}
 		}
 
 		public override bool AddChild(UIControl control)
@@ -79,8 +169,16 @@ namespace DXFramework.UI
 
 		public override void DoLayout(ConstraintCategory category = ConstraintCategory.All)
 		{
-			ScrollBar.Width = Math.Min(30, Width * 0.2f);
 			base.DoLayout(category);
+			CheckScrollBarsVisible(category);
+			UpdateScrollBarPosition();
+		}
+
+		public enum ScrollBarMode
+		{
+			Vertical = 1,
+			Horizontal = 2,
+			Both = Vertical | Horizontal
 		}
 	}
 }

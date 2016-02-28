@@ -15,13 +15,19 @@ namespace DXFramework
 
 		public static void Initialize(Game game)
 		{
-			Engine.Game = game;
-			Engine.Content = game.Content;
-			Engine.DefaultFont = Engine.Content.Load<SpriteFont>("Fonts/Debug");
-			Engine.ScreenSize = new Vector2(game.GraphicsDevice.BackBuffer.Width, game.GraphicsDevice.BackBuffer.Height);
+			Game = game;
+			Content = game.Content;
+			DefaultFont = Content.Load<SpriteFont>("Fonts/Debug");
 
-			Engine.Texture1x1 = Texture2D.New(game.GraphicsDevice, 1, 1, PixelFormat.B8G8R8A8.UNorm);
+			Texture1x1 = Texture2D.New(game.GraphicsDevice, 1, 1, PixelFormat.B8G8R8A8.UNorm);
 			Texture1x1.SetData(new Color[] { Color.White });
+
+			UpdateScreenSize();
+		}
+
+		public static void UpdateScreenSize()
+		{
+			ScreenSize = new Vector2(Game.GraphicsDevice.BackBuffer.Width, Game.GraphicsDevice.BackBuffer.Height);
 		}
 	}
 }
