@@ -9,6 +9,7 @@ namespace DXFramework.UI
 	public class UIScrollWindow : UIPanel
 	{
 		private ScrollBarMode mode;
+		private UIPanel fillerPanel;
 
 		public UIScrollWindow(ScrollBarMode mode = ScrollBarMode.Vertical)
 		{
@@ -23,13 +24,32 @@ namespace DXFramework.UI
 			ScrollPanel.AllowInsideScrolling = false;
 			ScrollPanel.ContentScrolled += scrollPanel_ContentScrolled;
 
+			if (mode == ScrollBarMode.Both)
+			{
+				fillerPanel = new UIPanel();
+				fillerPanel.Color = new Color(240, 240, 240);
+				fillerPanel.AutoSize = false;
+				fillerPanel.Size = new Vector2(16, 16);
+				fillerPanel.Alpha = 1f;
+				fillerPanel.AddConstraint(Edge.BottomRight, this, Edge.BottomRight);
+				base.AddChild(fillerPanel);
+			}
+
 			if (mode.ContainsFlag(ScrollBarMode.Vertical))
 			{
 				VerticalScrollBar = new UIScrollBar(UIScrollBar.ScrollBarOrientation.Vertical);
 				VerticalScrollBar.ValueChanged += scrollBar_ValueChanged;
 				VerticalScrollBar.Width = 16f;
 				VerticalScrollBar.AddConstraint(Edge.TopRight, this, Edge.TopRight);
-				VerticalScrollBar.AddConstraint(Edge.Bottom, this, Edge.Bottom, mode.ContainsFlag(ScrollBarMode.Horizontal) ? VerticalScrollBar.Width : 0);
+
+				if (fillerPanel != null)
+				{
+					VerticalScrollBar.AddConstraint(Edge.Bottom, fillerPanel, Edge.Top);
+				}
+				else
+				{
+					VerticalScrollBar.AddConstraint(Edge.Bottom, this, Edge.Bottom, mode.ContainsFlag(ScrollBarMode.Horizontal) ? VerticalScrollBar.Width : 0);
+				}
 				ScrollPanel.AddConstraint(Edge.Left, this, Edge.Left, 1);
 				ScrollPanel.AddConstraint(Edge.Right, VerticalScrollBar, Edge.Left, -1);
 				base.AddChild(VerticalScrollBar);
@@ -46,7 +66,16 @@ namespace DXFramework.UI
 				HorizontalScrollBar.ValueChanged += scrollBar_ValueChanged;
 				HorizontalScrollBar.Height = 16f;
 				HorizontalScrollBar.AddConstraint(Edge.BottomLeft, this, Edge.BottomLeft);
-				HorizontalScrollBar.AddConstraint(Edge.Right, this, Edge.Right, mode.ContainsFlag(ScrollBarMode.Vertical) ? HorizontalScrollBar.Height : 0);
+
+				if (fillerPanel != null)
+				{
+					HorizontalScrollBar.AddConstraint(Edge.Right, fillerPanel, Edge.Left);
+				}
+				else
+				{
+					HorizontalScrollBar.AddConstraint(Edge.Right, this, Edge.Right, mode.ContainsFlag(ScrollBarMode.Vertical) ? HorizontalScrollBar.Height : 0);
+				}
+				
 				ScrollPanel.AddConstraint(Edge.Top, this, Edge.Top, 1);
 				ScrollPanel.AddConstraint(Edge.Bottom, HorizontalScrollBar, Edge.Top, -1);
 				base.AddChild(HorizontalScrollBar);
@@ -57,16 +86,7 @@ namespace DXFramework.UI
 				ScrollPanel.AddConstraint(Edge.Bottom, this, Edge.Bottom, -1);
 			}
 
-			if (mode == ScrollBarMode.Both)
-			{
-				var fillerPanel = new UIPanel();
-				fillerPanel.Color = VerticalScrollBar.Color;
-				fillerPanel.AutoSize = false;
-				fillerPanel.Size = new Vector2(VerticalScrollBar.Width, HorizontalScrollBar.Height);
-				fillerPanel.Alpha = 1f;
-				fillerPanel.AddConstraint(Edge.BottomRight, this, Edge.BottomRight);
-				base.AddChild(fillerPanel);
-			}
+
 
 			base.AddChild(ScrollPanel);
 		}
@@ -134,6 +154,16 @@ namespace DXFramework.UI
 				{
 					HorizontalScrollBar.Visible = v;
 					HorizontalScrollBar.DoLayout(category);
+				}
+			}
+
+			if (mode == ScrollBarMode.Both)
+			{
+				var showFiller = VerticalScrollBar.Visible && HorizontalScrollBar.Visible;
+				if (showFiller != fillerPanel.Visible)
+				{
+					fillerPanel.Visible = showFiller;
+					base.DoLayout(category);
 				}
 			}
 		}

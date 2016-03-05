@@ -22,6 +22,7 @@ namespace DXFramework.UI
 			Size = new Vector2(20);
 			Alpha = defaultAlpha;
 			DrawBounds = true;
+			AbsorbPointer = true;
 			Color = Color.Black;
 
 			rect = new PRect(boundingRect, 3);

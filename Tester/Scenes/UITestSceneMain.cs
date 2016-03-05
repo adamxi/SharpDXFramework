@@ -76,6 +76,7 @@ namespace XManager.Scenes
 			contentPanel.AddConstraint(Edge.Dock, window.BodyPanel, Edge.Dock);
 
 			var img = new UIImage("graphics/map");
+			img.Tag = "Map";
 			img.AddConstraint(Edge.TopLeft, contentPanel.ScrollPanel, Edge.TopLeft, ConstraintCategory.Initialization);
 			contentPanel.AddChild(img);
 

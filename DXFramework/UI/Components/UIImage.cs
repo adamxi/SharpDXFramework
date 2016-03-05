@@ -24,6 +24,10 @@ namespace DXFramework.UI
 			{
 				texture = Engine.Content.Load<Texture2D>(Resource);
 				Size = new Vector2(texture.Width, texture.Height);
+				if (Tag == null)
+				{
+					Tag = texture.Name;
+				}
 			}
 		}
 

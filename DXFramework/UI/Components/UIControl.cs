@@ -10,6 +10,8 @@ namespace DXFramework.UI
 	public abstract class UIControl
 	{
 		public static List<UIControl> Disposed = new List<UIControl>();
+		private static UIControl pointedControl;
+		private static UIControl heldControl;
 
 		internal Vector2 position;
 		protected Color color;
@@ -495,7 +497,7 @@ namespace DXFramework.UI
 			remove { onInputHover -= onInputHover.Unregister(value); }
 		}
 
-		private bool CheckEvent(EventHandler<MouseEventArgs> inputEvent, MouseButton button)
+		private bool CheckEvent(EventHandler<MouseEventArgs> inputEvent, MouseButton button = MouseButton.None)
 		{
 			if (inputEvent != null)
 			{
@@ -505,9 +507,6 @@ namespace DXFramework.UI
 			}
 			return false;
 		}
-
-		private static UIControl pointedControl;
-		private static UIControl heldControl;
 
 		protected virtual bool HandlePointerEvents()
 		{
@@ -524,35 +523,34 @@ namespace DXFramework.UI
 
 				if (IntersectsPointer())
 				{
-					if (CheckEvent(onInputHover, MouseButton.None))
-					{
-					}
+					CheckEvent(onInputHover);
 				}
 				else
 				{
-					//Console.WriteLine("Left 1: " + ToString());
-					CheckEvent(onInputLeave, MouseButton.None);
+					//Console.WriteLine("Leave 1: " + ToString());
+					CheckEvent(onInputLeave);
 					pointedControl = null;
 				}
 			}
 			else
 			{
-				if (IntersectsPointer())
+				if (AbsorbPointer && IntersectsPointer())
 				{
 					if (pointedControl != null && pointedControl != this)
 					{
-						//Console.WriteLine("Left 2: " + pointedControl.ToString());
-						pointedControl.CheckEvent(pointedControl.onInputLeave, MouseButton.None);
+						//Console.WriteLine("Leave 2: " + pointedControl.ToString());
+						pointedControl.CheckEvent(pointedControl.onInputLeave);
 						pointedControl = null;
 					}
-					// TODO: Enable fall-through logic for onInputEnter
 
+					// TODO: Enable fall-through logic for onInputEnter
 					//Console.WriteLine("Entered: " + ToString());
-					CheckEvent(onInputEnter, MouseButton.None);
-					UIControl.pointedControl = this;
-					pointerHandled = AbsorbPointer;
+					CheckEvent(onInputEnter);
+					pointedControl = this;
+					pointerHandled = true;
 				}
 			}
+
 			//Console.WriteLine("Pointer AbsorbPointer: " + ToString() + " " + AbsorbPointer);
 			if (PointerDown)
 			{
@@ -597,7 +595,7 @@ namespace DXFramework.UI
 				{
 					//Console.WriteLine("Pointer Up: " + ToString());
 					PointerDown = false;
-					pointerHandled = false; // TODO: This has not been tested properly
+					pointerHandled = true;
 
 					if (CheckEvent(onInputReleasedAnywhere, InputManager.MouseReleased))
 					{

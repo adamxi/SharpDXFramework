@@ -9,8 +9,8 @@ namespace DXFramework.UI
 		private EventHandler<EventArgs> onValueChanged;
 		private UIControl sliderBackground;
 		private UIPanel slider;
-		private UIControl arrowA;
-		private UIControl arrowB;
+		private UIButton arrowA;
+		private UIButton arrowB;
 		private float scrollStep;
 
 		public UIScrollBar(ScrollBarOrientation orientation = ScrollBarOrientation.Vertical)
@@ -52,18 +52,31 @@ namespace DXFramework.UI
 			slider.Size = sliderSize;
 			//slider.InputDown += sliderBackground_MousePressed;
 
-			arrowA = new UIImage(arrowResource);
+			arrowA = new UIButton();
+			var arrowAImg = new UIImage(arrowResource);
+			arrowAImg.Color = new Color(96, 96, 96);
+			arrowAImg.AddConstraint(Edge.Dock, arrowA, Edge.Dock);
+			arrowA.Tag = "bla";
+			arrowA.AddDecoration(arrowAImg);
+			arrowA.PointedColor = new Color(190, 190, 190);
+			arrowA.PressedColor = new Color(120, 120, 120);
+			arrowA.HighlightZoom = false;
 			arrowA.InputDown += arrowA_MouseHeld;
-			arrowA.Color = new Color(96, 96, 96);
 
-			arrowB = new UIImage(arrowResource);
+			arrowB = new UIButton();
+			var arrowBImg = new UIImage(arrowResource);
+			arrowBImg.Color = new Color(96, 96, 96);
+			arrowBImg.AddConstraint(Edge.Dock, arrowB, Edge.Dock);
+			arrowB.AddDecoration(arrowBImg);
+			arrowB.PointedColor = new Color(190, 190, 190);
+			arrowB.PressedColor = new Color(120, 120, 120);
+			arrowB.HighlightZoom = false;
 			arrowB.InputDown += arrowB_MouseHeld;
-			arrowB.Color = new Color(96, 96, 96);
-
+			
 			switch (orientation)
 			{
 				case ScrollBarOrientation.Vertical:
-					arrowA.SpriteEffect = SpriteEffects.FlipVertically;
+					arrowAImg.SpriteEffect = SpriteEffects.FlipVertically;
 					arrowA.AddConstraint(Edge.Horizontal | Edge.Top, this, Edge.Horizontal | Edge.Top);
 					arrowB.AddConstraint(Edge.Horizontal, this, Edge.Horizontal);
 					arrowB.AddConstraint(Edge.Bottom, this, Edge.Bottom);
@@ -75,7 +88,7 @@ namespace DXFramework.UI
 					break;
 
 				case ScrollBarOrientation.Horizontal:
-					arrowB.SpriteEffect = SpriteEffects.FlipHorizontally;
+					arrowBImg.SpriteEffect = SpriteEffects.FlipHorizontally;
 					arrowA.AddConstraint(Edge.Vertical | Edge.Left, this, Edge.Vertical | Edge.Left);
 					arrowB.AddConstraint(Edge.Vertical, this, Edge.Vertical);
 					arrowB.AddConstraint(Edge.Right, this, Edge.Right);
